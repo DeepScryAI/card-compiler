@@ -1,0 +1,21 @@
+[package]
+name = "cardskin"
+version = "0.1.0"
+edition = "2021"
+# NOTE: license intentionally left unset. DeepScry's own repo is
+# proprietary; card-scripts-mirror is GPLv3 (inherited from Forge). This
+# repo's license is an open question for the owner, not something to guess
+# at — set it explicitly before any external consumer or publish step.
+description = "Index-compiling machinery for DeepScry's card-skin art index: the SCDT binary wire format and the build-time generator that produces it from Scryfall data."
+
+[features]
+default = []
+# Build-time machinery: the Scryfall record parser (builder.rs) and, once
+# implemented, the bulk-fetch/cache helper (bulk_fetch.rs). Off by default
+# so a consumer that only wants the wire format (e.g. a wasm client
+# decoding an already-built table) pulls zero extra dependencies — `wire`
+# itself needs nothing beyond `std`.
+builder = ["dep:serde"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"], optional = true }
