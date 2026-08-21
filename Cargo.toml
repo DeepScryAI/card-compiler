@@ -15,7 +15,22 @@ default = []
 # so a consumer that only wants the wire format (e.g. a wasm client
 # decoding an already-built table) pulls zero extra dependencies — `wire`
 # itself needs nothing beyond `std`.
-builder = ["dep:serde"]
+builder = ["dep:serde", "dep:serde_json", "dep:reqwest", "dep:flate2", "dep:log"]
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"], optional = true }
+# The remaining four are `bulk_fetch`'s, added when that module got real
+# content rather than in advance, so this file never claims a dependency
+# nothing here uses.
+#
+# `reqwest` is pinned to rustls with default features off to match the
+# consuming DeepScry CLI's own configuration -- a second TLS stack in one
+# binary is a real cost, and default-features would pull native-tls.
+#
+# There is deliberately NO `tokio` here. `ensure_cache` is `async` for
+# reqwest's sake, but every filesystem operation uses `std::fs`, so the
+# caller supplies the runtime and this crate does not depend on one.
+serde_json = { version = "1.0", optional = true }
+reqwest = { version = "0.12", features = ["rustls-tls"], default-features = false, optional = true }
+flate2 = { version = "1.1", optional = true }
+log = { version = "0.4", optional = true }
