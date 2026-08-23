@@ -89,3 +89,17 @@ cargo build --target wasm32-unknown-unknown   # wire.rs alone, browser target
 Not yet set. DeepScry's own repository is proprietary; `card-scripts-mirror`
 is GPLv3 (inherited from Forge). This repository's license is an open
 question for the project owner — do not assume one.
+
+## Single-threaded development policy
+
+Owner ruling, 2026-08-22: this repository is used only by the DeepScry
+workstream and is developed **single-threaded, landing to `main` with no
+side tracks**.
+
+- Commit directly to `main`, in small commits; history stays linear (plain
+  fast-forward only, never force-push).
+- Do **not** create side branches or long-lived PR branches. Work that is
+  not ready to land on `main` stays local.
+- Every commit that an external repository pins (a DeepScry submodule
+  gitlink) is anchored by an annotated tag under `pin/` so the pinned
+  commit stays fetchable regardless of how `main` moves.
