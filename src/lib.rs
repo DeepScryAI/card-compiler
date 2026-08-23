@@ -8,9 +8,10 @@
 //! `src/engine/src/scryfall_table.rs` (-> [`builder`]), verbatim aside
 //! from the module-path rename `crate::scryfall::` -> `crate::wire::`. See
 //! `ai_docs/transient/SCRYFALL_CRATE_PLAN_20260819.md` in the DeepScry
-//! repo for the plan this crate implements, including which DeepScry call
-//! sites still need updating (that DeepScry-side move is a separate,
-//! later pass — this crate does not yet have any DeepScry consumer).
+//! repo for the plan this crate implements. DeepScry now consumes this
+//! crate: it pins this repository as its `card-compiler` submodule and
+//! takes `cardskin` as a path dependency from its engine, wasm
+//! web-client, and CLI crates.
 //!
 //! # Two halves, two audiences
 //!
@@ -28,10 +29,11 @@
 //! OFF by default so a wire-only consumer (e.g. the wasm client, which
 //! only ever decodes an already-built table) pulls nothing extra.
 //!
-//! `bulk_fetch` (also behind `builder`) is reserved for the Scryfall
-//! bulk-data download/cache helper — NOT YET IMPLEMENTED in this crate.
-//! See `bulk_fetch.rs`'s own doc comment for why it's an empty module
-//! rather than a stub with fake logic in it.
+//! `bulk_fetch` (also behind `builder`) is the Scryfall bulk-data
+//! download/cache helper; its `ensure_cache` performs the one sanctioned
+//! `api.scryfall.com` request — an offline, on-demand build step, never
+//! a runtime call. See `bulk_fetch.rs`'s own doc comment for the move
+//! provenance.
 
 pub mod wire;
 

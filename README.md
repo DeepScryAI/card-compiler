@@ -43,30 +43,33 @@ The `cardskin` crate:
   that turns raw Scryfall `unique_artwork` bulk-data records into the
   entries `wire::encode_card_lookup` serializes. Needs `serde` to
   deserialize Scryfall's JSON record shape.
-- **`bulk_fetch`** (behind `builder`, NOT YET IMPLEMENTED) — reserved for
-  the Scryfall bulk-data download/cache helper. See the module's own doc
-  comment for what it should become and why it's an empty placeholder
-  rather than a stub with fake logic in it.
+- **`bulk_fetch`** (behind `builder`) — the Scryfall bulk-data
+  download/cache helper, moved here from DeepScry's CLI so that DeepScry's
+  own source no longer contains an `api.scryfall.com` request or a
+  Scryfall bulk-record parser. Its `ensure_cache` is the ONE sanctioned
+  `api.scryfall.com` fetch: an offline, on-demand build step, never a
+  runtime call. See the module's own doc comment for the move provenance
+  and the three deliberate deviations from the original.
 
 Both `wire.rs` and `builder.rs` were moved from DeepScry's
 `src/engine/src/scryfall.rs` and `src/engine/src/scryfall_table.rs`
 verbatim (module-path renames only — no logic changes), including their
-existing test suites (9 + 8 = 17 tests total). Confirmed by direct diff
+existing test suites (9 + 8 = 17 tests at move time). Confirmed by direct diff
 against the DeepScry source at move time: identical apart from the
 `crate::scryfall::` -> `crate::wire::` path rename.
 
+DeepScry consumes this crate: it pins this repository as its
+`card-compiler` submodule and takes `cardskin` as an ordinary Cargo path
+dependency from its engine, wasm web-client, and CLI crates, and its
+original `scryfall.rs`/`scryfall_table.rs` are deleted (the ds-1zoywb
+move in the DeepScry repository).
+
 ## What's NOT here yet
 
-- **No DeepScry consumer.** This crate has no dependent yet. The
-  DeepScry-side changes (adding this repository as a submodule, updating
-  its six call sites, deleting `scryfall.rs`/`scryfall_table.rs`) are a
-  deliberately separate, later pass — see the plan document referenced
-  above for the exact call-site diffs.
 - **Distribution.** No tarballs, no release artifacts, no packaging. The
   parent DeepScry checkout keeps its `cardsfolder` symlink and its web
   build keeps reading scripts directly; this crate is consumed as an
   ordinary Cargo path dependency, nothing more, for now.
-- **`bulk_fetch`'s real implementation** — see above.
 - **The mirror's own Scryfall-touching build scripts**
   (`generate_uuid_trie.rs`, `scan_scryfall_ip.rs`,
   `scripts/lib/scryfall_bulk.rs`), currently still in
@@ -77,7 +80,7 @@ against the DeepScry source at move time: identical apart from the
 
 ```sh
 cargo test                  # wire.rs only — 9 tests, zero external deps
-cargo test --features builder   # + builder.rs — 17 tests total
+cargo test --features builder   # + builder.rs and bulk_fetch.rs — 23 tests total
 cargo build --target wasm32-unknown-unknown   # wire.rs alone, browser target
 ```
 

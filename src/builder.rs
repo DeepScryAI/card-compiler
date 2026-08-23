@@ -119,8 +119,8 @@ impl ScryfallRecord {
     /// face illustrations differ from the normal printing's, so when the SAME
     /// card name has both a normal and an Art Series printing we must NOT let
     /// the Art Series art win the lookup key — that is the ds-1242 defect
-    /// ("The Boulder, Ready to Rumble" showed the rotated signed art instead of
-    /// its portrait). The pairing is deliberately strict (`layout == art_series`
+    /// (the affected card showed the rotated signed art instead of its
+    /// portrait). The pairing is deliberately strict (`layout == art_series`
     /// AND `set_type == memorabilia`) so we never accidentally drop a real
     /// token / emblem / minigame card (those are a separate set type and are
     /// the ONLY printing for their name).
@@ -148,7 +148,7 @@ pub fn normalize_colors_wubrg(colors: &[String]) -> String {
 }
 
 /// Normalize a P/T value to the key string: the trimmed value, or "" if absent
-/// (non-creature tokens like Clue have no P/T). "*" passes through unchanged.
+/// (non-creature tokens have no P/T). "*" passes through unchanged.
 fn normalize_pt(pt: &Option<String>) -> String {
     pt.as_deref().unwrap_or("").trim().to_string()
 }
@@ -187,12 +187,11 @@ fn lookup_keys(rec: &ScryfallRecord) -> Vec<String> {
         // Primary: composite (name + P/T + colors). Alias: bare name.
         keys.push(token_lookup_key(&rec.name, &p, &t, &colors));
         keys.push(rec.name.clone());
-        // ds-1247: the Forge token scripts name tokens "<Type> Token"
-        // (e.g. "Food Token", "Treasure Token", "Clue Token"), but Scryfall
-        // names the SAME token without the suffix ("Food", "Treasure", "Clue").
+        // ds-1247: the Forge token scripts name tokens "<Type> Token", but
+        // Scryfall names the SAME token WITHOUT the " Token" suffix.
         // The engine looks the art up under its OWN "<Type> Token" name, which
-        // misses every token in the Scryfall-keyed table — Food tokens (and all
-        // others) then render imageless. Index a "<name> Token" alias (both the
+        // misses every token in the Scryfall-keyed table — every token then
+        // renders imageless. Index a "<name> Token" alias (both the
         // composite and bare forms) so the engine's name resolves directly,
         // without the client having to strip the suffix.
         let with_suffix = format!("{} Token", rec.name);
@@ -366,30 +365,39 @@ mod tests {
 
     #[test]
     fn builds_token_and_normal_card_keys_and_resolves_cdn_urls() {
-        let bolt = rec(
-            "Lightning Bolt",
+        let card = rec(
+            "Fixture Qzx One",
             "77c6fa74-5543-42ac-9ead-0e890b188e99",
             "1706239968",
             "normal",
         );
-        let mut clue = rec("Clue", "c321b9e4-ab7e-4e8a-988f-5463c776d685", "1771590258", "token");
-        clue.type_line = "Token Artifact — Clue".to_string();
+        let mut token = rec(
+            "Fixture Gadget",
+            "c321b9e4-ab7e-4e8a-988f-5463c776d685",
+            "1771590258",
+            "token",
+        );
+        token.type_line = "Token Artifact — Fixture Gadget".to_string();
 
-        let out = build_card_lookup(&[bolt, clue], CdnSize::Normal).expect("no drift");
+        let out = build_card_lookup(&[card, token], CdnSize::Normal).expect("no drift");
         let keys: Vec<&str> = out.entries.iter().map(|e| e.key.as_str()).collect();
 
         // Normal card keyed by name.
-        assert!(keys.contains(&"Lightning Bolt"));
+        assert!(keys.contains(&"Fixture Qzx One"));
         // Token keyed by composite (name + empty P/T + colorless) AND bare name.
-        assert!(keys.contains(&"Clue\u{1f}\u{1f}\u{1f}"));
-        assert!(keys.contains(&"Clue")); // bare-name alias
+        assert!(keys.contains(&"Fixture Gadget\u{1f}\u{1f}\u{1f}"));
+        assert!(keys.contains(&"Fixture Gadget")); // bare-name alias
 
         // The token entry reconstructs the verified live CDN URL.
-        let clue_entry = out.entries.iter().find(|e| e.key == "Clue\u{1f}\u{1f}\u{1f}").unwrap();
+        let token_entry = out
+            .entries
+            .iter()
+            .find(|e| e.key == "Fixture Gadget\u{1f}\u{1f}\u{1f}")
+            .unwrap();
         assert_eq!(
             cdn_image_url(
-                &uuid_to_string(&clue_entry.uuid),
-                &clue_entry.version.to_string(),
+                &uuid_to_string(&token_entry.uuid),
+                &token_entry.version.to_string(),
                 CdnSize::Small
             ),
             "https://cards.scryfall.io/small/front/c/3/c321b9e4-ab7e-4e8a-988f-5463c776d685.jpg?1771590258",
@@ -402,30 +410,40 @@ mod tests {
     fn picks_oldest_art_per_identity() {
         // Two printings of one card; the OLDER released_at wins.
         let new = {
-            let mut r = rec("Counterspell", "11111111-1111-1111-1111-111111111111", "100", "normal");
+            let mut r = rec(
+                "Fixture Qzx Two",
+                "11111111-1111-1111-1111-111111111111",
+                "100",
+                "normal",
+            );
             r.released_at = "2021-01-01".to_string();
             r
         };
         let old = {
-            let mut r = rec("Counterspell", "22222222-2222-2222-2222-222222222222", "200", "normal");
+            let mut r = rec(
+                "Fixture Qzx Two",
+                "22222222-2222-2222-2222-222222222222",
+                "200",
+                "normal",
+            );
             r.released_at = "1994-01-01".to_string();
             r
         };
         let out = build_card_lookup(&[new, old], CdnSize::Normal).unwrap();
-        let e = out.entries.iter().find(|e| e.key == "Counterspell").unwrap();
+        let e = out.entries.iter().find(|e| e.key == "Fixture Qzx Two").unwrap();
         assert_eq!(uuid_to_string(&e.uuid), "22222222-2222-2222-2222-222222222222");
     }
 
     #[test]
     fn art_series_printing_never_overrides_normal_art() {
-        // ds-1242: "The Boulder, Ready to Rumble" had a normal `tla` printing
+        // ds-1242: a card had BOTH a normal `tla` printing
         // AND an `atla` Art Series printing (layout=art_series, set_type=
         // memorabilia) sharing the SAME released_at. The Art Series art (rotated
         // / signed full-bleed) must NEVER win the lookup key — even on a date
         // tie where it might otherwise survive as the incumbent.
         let normal = {
             let mut r = rec(
-                "The Boulder, Ready to Rumble",
+                "Fixture Qzx Three",
                 "ec27a466-5457-44c6-a842-1de7d3788d66",
                 "176412",
                 "normal",
@@ -436,7 +454,7 @@ mod tests {
         };
         let art_series = {
             let mut r = rec(
-                "The Boulder, Ready to Rumble",
+                "Fixture Qzx Three",
                 "a7968699-4ac1-412b-b0fa-c23100fb91ac",
                 "1",
                 "art_series",
@@ -451,8 +469,8 @@ mod tests {
         let e = out
             .entries
             .iter()
-            .find(|e| e.key == "The Boulder, Ready to Rumble")
-            .expect("Boulder is indexed");
+            .find(|e| e.key == "Fixture Qzx Three")
+            .expect("the fixture card is indexed");
         assert_eq!(
             uuid_to_string(&e.uuid),
             "ec27a466-5457-44c6-a842-1de7d3788d66",
@@ -462,42 +480,42 @@ mod tests {
 
     #[test]
     fn token_is_also_indexed_under_the_forge_token_suffix_name() {
-        // ds-1247: Scryfall names the Food token "Food", but the Forge token
-        // script names it "Food Token". The table must index BOTH so the
+        // ds-1247: Scryfall names a token by its bare name, but the Forge token
+        // script appends " Token". The table must index BOTH so the
         // engine's "<Type> Token" lookup resolves.
-        let food = {
-            let mut r = rec("Food", "01136e91-1ad3-4e01-8f7e-2718c3a9da27", "5", "token");
+        let snack = {
+            let mut r = rec("Fixture Snack", "01136e91-1ad3-4e01-8f7e-2718c3a9da27", "5", "token");
             r.set_type = "token".to_string();
             r
         };
-        let out = build_card_lookup(&[food], CdnSize::Normal).unwrap();
+        let out = build_card_lookup(&[snack], CdnSize::Normal).unwrap();
         let keys: Vec<&str> = out.entries.iter().map(|e| e.key.as_str()).collect();
         // Scryfall bare name + composite.
-        assert!(keys.contains(&"Food"), "bare Scryfall name");
-        assert!(keys.contains(&"Food\u{1f}\u{1f}\u{1f}"), "composite key");
-        // Forge engine name ("Food Token") + its composite.
-        assert!(keys.contains(&"Food Token"), "Forge token-suffix bare alias");
+        assert!(keys.contains(&"Fixture Snack"), "bare Scryfall name");
+        assert!(keys.contains(&"Fixture Snack\u{1f}\u{1f}\u{1f}"), "composite key");
+        // Forge engine name ("<name> Token") + its composite.
+        assert!(keys.contains(&"Fixture Snack Token"), "Forge token-suffix bare alias");
         assert!(
-            keys.contains(&"Food Token\u{1f}\u{1f}\u{1f}"),
+            keys.contains(&"Fixture Snack Token\u{1f}\u{1f}\u{1f}"),
             "Forge token-suffix composite alias"
         );
         // All four aliases point at the same Scryfall UUID.
         let want = "01136e91-1ad3-4e01-8f7e-2718c3a9da27";
         for k in [
-            "Food",
-            "Food\u{1f}\u{1f}\u{1f}",
-            "Food Token",
-            "Food Token\u{1f}\u{1f}\u{1f}",
+            "Fixture Snack",
+            "Fixture Snack\u{1f}\u{1f}\u{1f}",
+            "Fixture Snack Token",
+            "Fixture Snack Token\u{1f}\u{1f}\u{1f}",
         ] {
             let e = out.entries.iter().find(|e| e.key == k).unwrap();
-            assert_eq!(uuid_to_string(&e.uuid), want, "alias {k:?} resolves to the Food token");
+            assert_eq!(uuid_to_string(&e.uuid), want, "alias {k:?} resolves to the token");
         }
     }
 
     #[test]
     fn art_series_only_name_is_still_indexed() {
         // A name that exists ONLY as an Art Series printing (no normal printing
-        // in the dump, e.g. `Mina Harker`) must still be indexed — the Art
+        // in the dump) must still be indexed — the Art
         // Series record is only DEPRIORITIZED, never dropped.
         let only = {
             let mut r = rec(
@@ -539,7 +557,12 @@ mod tests {
 
     #[test]
     fn scryfall_placeholder_urls_are_skipped_without_indexing() {
-        let mut placeholder = rec("Ferrous Lake", "66666666-6666-6666-6666-666666666666", "5", "normal");
+        let mut placeholder = rec(
+            "Fixture Qzx Four",
+            "66666666-6666-6666-6666-666666666666",
+            "5",
+            "normal",
+        );
         placeholder.image_status = "placeholder".to_string();
         placeholder.image_uris = Some(ImageUris {
             small: Some("https://errors.scryfall.com/soon.jpg".to_string()),
@@ -547,9 +570,9 @@ mod tests {
         });
 
         let out = build_card_lookup(&[placeholder], CdnSize::Normal).expect("placeholder is a skip, not drift");
-        assert_eq!(out.skipped_placeholder_names, ["Ferrous Lake"]);
+        assert_eq!(out.skipped_placeholder_names, ["Fixture Qzx Four"]);
         assert!(
-            out.entries.iter().all(|entry| entry.key != "Ferrous Lake"),
+            out.entries.iter().all(|entry| entry.key != "Fixture Qzx Four"),
             "placeholder art must not be embedded in the lookup table"
         );
     }

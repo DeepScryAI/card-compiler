@@ -9,8 +9,8 @@
 //! ## Why the CDN, not the API
 //!
 //! The Scryfall `cards/named?...&format=image` API is rate-limited, returns
-//! `Cache-Control: max-age=172800` (2 days), and 404s on engine token names
-//! like "Clue Token". The direct CDN object
+//! `Cache-Control: max-age=172800` (2 days), and 404s on the engine's
+//! `"<Type> Token"`-style token names. The direct CDN object
 //! `cards.scryfall.io/<size>/front/<a>/<b>/<id>.jpg?<version>` is served
 //! `Cache-Control: max-age=31556952, immutable` (1 year, cf-cached) with no
 //! API hop or rate limit. task #7 migrates all external image loads onto it.
@@ -24,9 +24,9 @@
 //! two characters (the CDN's fan-out dirs), and `<version>` is the bare digit
 //! string Scryfall appends as the `?` query on every `image_uris` entry for
 //! cache-busting. Examples confirmed against the live CDN:
-//! - Lightning Bolt id `77c6fa74-…` →
+//! - a normal card, id `77c6fa74-…` →
 //!   `…/small/front/7/7/77c6fa74-….jpg?1706239968`
-//! - Clue token   id `c321b9e4-…` (layout=token) →
+//! - a token,       id `c321b9e4-…` (layout=token) →
 //!   `…/small/front/c/3/c321b9e4-….jpg?1771590258`
 //!
 //! The `(id, version)` pair is exactly what the compact client table stores;
@@ -171,8 +171,8 @@ pub fn image_version_from_url(image_uri: &str) -> Option<&str> {
 //
 // KEY convention (task #7): real cards key on the exact engine card name.
 // TOKENS key on a COMPOSITE of (name, P/T, colors) — Scryfall has many distinct
-// tokens sharing a name ("Elemental" spans 1/1…8/8; "Zombie" has white-1/1,
-// black-2/2, …), so a name-only key would mis-render e.g. a 7/1 Elemental as a
+// tokens sharing a name (a single token name can span several P/T variants
+// and colors), so a name-only key would mis-render e.g. a 7/1 token as a
 // 1/1. [`token_lookup_key`] builds that composite; the client builds the
 // identical key from the view model's token P/T + colors. The table ALSO indexes
 // a bare-name entry per token (a representative oldest art) so a composite miss
@@ -434,8 +434,9 @@ mod tests {
             cdn_image_url("77c6fa74-5543-42ac-9ead-0e890b188e99", "1706239968", CdnSize::Small),
             "https://cards.scryfall.io/small/front/7/7/77c6fa74-5543-42ac-9ead-0e890b188e99.jpg?1706239968",
         );
-        // The Clue TOKEN resolves on the CDN identically (the whole point of
-        // task #7 — the Scryfall named?exact=Clue Token API 404s, this does not).
+        // A TOKEN printing resolves on the CDN identically (the whole point of
+        // task #7 — the Scryfall named?exact= API 404s on the engine's
+        // "<Type> Token" names, this does not).
         assert_eq!(
             cdn_image_url("c321b9e4-ab7e-4e8a-988f-5463c776d685", "1771590258", CdnSize::Normal),
             "https://cards.scryfall.io/normal/front/c/3/c321b9e4-ab7e-4e8a-988f-5463c776d685.jpg?1771590258",
@@ -483,31 +484,32 @@ mod tests {
 
     #[test]
     fn token_key_is_composite_and_collision_free() {
-        // Two distinct "Elemental" tokens (7/1 red vs 1/1 colorless) → distinct
+        // Two distinct "Fixture Wisp" tokens (7/1 red vs 1/1 colorless) → distinct
         // keys, so a name-only table can't mis-render one as the other.
-        let a = token_lookup_key("Elemental", "7", "1", "R");
-        let b = token_lookup_key("Elemental", "1", "1", "");
+        let a = token_lookup_key("Fixture Wisp", "7", "1", "R");
+        let b = token_lookup_key("Fixture Wisp", "1", "1", "");
         assert_ne!(a, b);
-        assert_eq!(a, "Elemental\u{1f}7\u{1f}1\u{1f}R");
+        assert_eq!(a, "Fixture Wisp\u{1f}7\u{1f}1\u{1f}R");
     }
 
     #[test]
     fn card_lookup_encode_decode_round_trips() {
         // Mixed table: a normal card (name key) + a token (composite key),
-        // SORTED ascending by key. Uses the verified Clue token uuid/version.
-        let clue_uuid = uuid_to_bytes("c321b9e4-ab7e-4e8a-988f-5463c776d685").unwrap();
-        let bolt_uuid = uuid_to_bytes("77c6fa74-5543-42ac-9ead-0e890b188e99").unwrap();
+        // SORTED ascending by key. Uses a token (uuid, version) pair verified
+        // live against the CDN (see module docs).
+        let token_uuid = uuid_to_bytes("c321b9e4-ab7e-4e8a-988f-5463c776d685").unwrap();
+        let card_uuid = uuid_to_bytes("77c6fa74-5543-42ac-9ead-0e890b188e99").unwrap();
         let mut entries = vec![
             CardArtEntry {
-                key: "Clue Token\u{1f}0\u{1f}0\u{1f}".to_string(),
-                uuid: clue_uuid,
+                key: "Fixture Gadget Token\u{1f}0\u{1f}0\u{1f}".to_string(),
+                uuid: token_uuid,
                 version: 1771590258,
                 dfc: false,
             },
             // A double-faced card exercises the bit31 DFC flag round-trip.
             CardArtEntry {
-                key: "Lightning Bolt".to_string(),
-                uuid: bolt_uuid,
+                key: "Fixture Qzx One".to_string(),
+                uuid: card_uuid,
                 version: 1706239968,
                 dfc: true,
             },
@@ -523,14 +525,21 @@ mod tests {
         let decoded = decode_card_lookup(&blob).expect("decodes");
         assert_eq!(decoded, entries);
         // DFC flag survives (and never leaks into the version int).
-        let bolt = decoded.iter().find(|e| e.key == "Lightning Bolt").unwrap();
-        assert!(bolt.dfc);
-        assert_eq!(bolt.version, 1706239968);
+        let card = decoded.iter().find(|e| e.key == "Fixture Qzx One").unwrap();
+        assert!(card.dfc);
+        assert_eq!(card.version, 1706239968);
 
         // End-to-end: a decoded token entry reconstructs its live CDN URL.
-        let clue = decoded.iter().find(|e| e.key.starts_with("Clue Token")).unwrap();
+        let token = decoded
+            .iter()
+            .find(|e| e.key.starts_with("Fixture Gadget Token"))
+            .unwrap();
         assert_eq!(
-            cdn_image_url(&uuid_to_string(&clue.uuid), &clue.version.to_string(), CdnSize::Normal),
+            cdn_image_url(
+                &uuid_to_string(&token.uuid),
+                &token.version.to_string(),
+                CdnSize::Normal
+            ),
             "https://cards.scryfall.io/normal/front/c/3/c321b9e4-ab7e-4e8a-988f-5463c776d685.jpg?1771590258",
         );
 
@@ -550,33 +559,33 @@ mod tests {
 
     #[test]
     fn card_lookup_table_resolves_name_token_and_fallback() {
-        let clue = uuid_to_bytes("c321b9e4-ab7e-4e8a-988f-5463c776d685").unwrap();
-        let bolt = uuid_to_bytes("77c6fa74-5543-42ac-9ead-0e890b188e99").unwrap();
-        let goblin = uuid_to_bytes("11111111-2222-3333-4444-555555555555").unwrap();
-        // Table: normal card by name; Clue token by composite + bare-name alias;
-        // a "Goblin" bare name only (composite will miss → falls back to it).
+        let token = uuid_to_bytes("c321b9e4-ab7e-4e8a-988f-5463c776d685").unwrap();
+        let card = uuid_to_bytes("77c6fa74-5543-42ac-9ead-0e890b188e99").unwrap();
+        let gremlin = uuid_to_bytes("11111111-2222-3333-4444-555555555555").unwrap();
+        // Table: normal card by name; one token by composite + bare-name alias;
+        // a "Fixture Gremlin" bare name only (composite will miss → falls back to it).
         let mut entries = vec![
             CardArtEntry {
-                key: "Lightning Bolt".into(),
-                uuid: bolt,
+                key: "Fixture Qzx One".into(),
+                uuid: card,
                 version: 1706239968,
                 dfc: false,
             },
             CardArtEntry {
-                key: token_lookup_key("Clue", "", "", ""),
-                uuid: clue,
+                key: token_lookup_key("Fixture Gadget", "", "", ""),
+                uuid: token,
                 version: 1771590258,
                 dfc: false,
             },
             CardArtEntry {
-                key: "Clue".into(),
-                uuid: clue,
+                key: "Fixture Gadget".into(),
+                uuid: token,
                 version: 1771590258,
                 dfc: false,
             },
             CardArtEntry {
-                key: "Goblin".into(),
-                uuid: goblin,
+                key: "Fixture Gremlin".into(),
+                uuid: gremlin,
                 version: 42,
                 dfc: false,
             },
@@ -586,21 +595,21 @@ mod tests {
 
         // Normal card by name.
         assert_eq!(
-            table.cdn_url("Lightning Bolt", "", "", "", false, CdnSize::Small),
+            table.cdn_url("Fixture Qzx One", "", "", "", false, CdnSize::Small),
             Some(
                 "https://cards.scryfall.io/small/front/7/7/77c6fa74-5543-42ac-9ead-0e890b188e99.jpg?1706239968".into()
             ),
         );
         // Token by composite key (exact identity).
         assert_eq!(
-            table.cdn_url("Clue", "", "", "", true, CdnSize::Normal),
+            table.cdn_url("Fixture Gadget", "", "", "", true, CdnSize::Normal),
             Some(
                 "https://cards.scryfall.io/normal/front/c/3/c321b9e4-ab7e-4e8a-988f-5463c776d685.jpg?1771590258".into()
             ),
         );
-        // Token whose composite MISSES (Goblin 7/1 red not indexed) → bare-name fallback.
+        // Token whose composite MISSES (a 7/1 red not indexed) → bare-name fallback.
         assert!(table
-            .cdn_url("Goblin", "7", "1", "R", true, CdnSize::Small)
+            .cdn_url("Fixture Gremlin", "7", "1", "R", true, CdnSize::Small)
             .unwrap()
             .contains("11111111"));
         // Genuine miss → None (cascade falls through to gatherer).
@@ -646,10 +655,10 @@ mod tests {
             base: "https://cdn.deepscry.net/art_crop",
             ext: "png",
         };
-        let bolt = uuid_to_bytes("77c6fa74-5543-42ac-9ead-0e890b188e99").unwrap();
+        let card = uuid_to_bytes("77c6fa74-5543-42ac-9ead-0e890b188e99").unwrap();
         let entries = vec![CardArtEntry {
-            key: "Lightning Bolt".into(),
-            uuid: bolt,
+            key: "Fixture Qzx One".into(),
+            uuid: card,
             version: 1706239968,
             dfc: false,
         }];
@@ -658,7 +667,7 @@ mod tests {
         // R2-scheme table → custom host + .png, same fan-out shape.
         let r2 = CardLookupTable::from_bytes_with(&blob, R2_SCHEME).unwrap();
         assert_eq!(
-            r2.cdn_url("Lightning Bolt", "", "", "", false, CdnSize::ArtCrop),
+            r2.cdn_url("Fixture Qzx One", "", "", "", false, CdnSize::ArtCrop),
             Some(
                 "https://cdn.deepscry.net/art_crop/art_crop/front/7/7/77c6fa74-5543-42ac-9ead-0e890b188e99.png?1706239968"
                     .into()
@@ -668,7 +677,7 @@ mod tests {
         // Default (legacy) table → stock Scryfall .jpg, byte-identical to before.
         let scry = CardLookupTable::from_bytes(&blob).unwrap();
         assert_eq!(
-            scry.cdn_url("Lightning Bolt", "", "", "", false, CdnSize::Small),
+            scry.cdn_url("Fixture Qzx One", "", "", "", false, CdnSize::Small),
             Some(
                 "https://cards.scryfall.io/small/front/7/7/77c6fa74-5543-42ac-9ead-0e890b188e99.jpg?1706239968".into()
             ),

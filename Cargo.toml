@@ -10,8 +10,8 @@ description = "Index-compiling machinery for DeepScry's card-skin art index: the
 
 [features]
 default = []
-# Build-time machinery: the Scryfall record parser (builder.rs) and, once
-# implemented, the bulk-fetch/cache helper (bulk_fetch.rs). Off by default
+# Build-time machinery: the Scryfall record parser (builder.rs) and the
+# bulk-fetch/cache helper (bulk_fetch.rs). Off by default
 # so a consumer that only wants the wire format (e.g. a wasm client
 # decoding an already-built table) pulls zero extra dependencies — `wire`
 # itself needs nothing beyond `std`.
