@@ -1,0 +1,160 @@
+# Normalized pattern<TAB>plain-language reason
+bear	A common English animal name and generic creature type.
+cat	A common English animal name and generic creature type.
+first strike	A generic game-mechanics phrase made only of common English words.
+deal damage	A generic verb phrase required in engine narration and gameplay documentation.
+card draw	A generic game-engine concept used throughout rules-independent code.
+game over	A generic software state and ordinary English phrase.
+level up	A generic game-progression phrase required in engine narration.
+no more	An ordinary English phrase used in assertions and diagnostics.
+on an adventure	A generic state-transition phrase required in engine narration.
+plus one	A generic arithmetic phrase used by counters and index calculations.
+poison counter	A generic game-object phrase required in engine narration.
+red mana	A generic structured game-resource phrase.
+the core	A generic software-architecture phrase.
+the end	An ordinary English phrase and generic phase/state label.
+the general	An ordinary English phrase used in explanatory prose.
+the moment	An ordinary English phrase used in explanatory prose.
+they re	An ordinary English contraction used in explanatory prose.
+too many	An ordinary quantity phrase used by HTTP and bounds diagnostics.
+vigilance	A common English noun and generic game-mechanics term.
+angel demon	A pair of generic creature subtypes used as structured DSL values.
+angel warrior	A pair of generic creature subtypes used as structured DSL values.
+angel angel	A generated enum/value pair for a generic creature subtype.
+beast beast	A generated enum/value pair for a generic creature subtype.
+body count	A generic parser implementation phrase for a body length/count.
+clue clue	A generated enum/value pair for a generic game-object subtype.
+command decision	A generic input-controller phrase pairing a command with its decision.
+decisions decisions	A generated field/counter pair in search instrumentation.
+dinosaur dinosaur	A generated enum/value pair for a generic creature subtype.
+elemental elemental	A generated enum/value pair for a generic creature subtype.
+elminster elminster	A generated enum/value pair for a public-domain character subtype.
+flashback flashback	A generated enum/value pair for a generic game keyword.
+forest forest	A generated enum/value pair for a generic land subtype.
+game plan	A generic software and strategy phrase.
+island island	A generated enum/value pair for a generic land subtype.
+item crate	A generic Rust documentation phrase linking an item to its crate.
+manticore manticore	A generated enum/value pair for a mythological creature subtype.
+map map	A generated identifier/value pair for a generic collection operation.
+mine mine mine	A generated enum/value pair for a generic land subtype.
+monkey monkey monkey	A generated enum/value pair for a generic creature subtype.
+mordenkainen mordenkainen	A generated enum/value pair for a public-domain character subtype.
+mountain mountain	A generated enum/value pair for a generic land subtype.
+negate negate	A generated local-variable/value pair for a generic negation operation.
+plains plains	A generated enum/value pair for a generic land subtype.
+saproling saproling	A generated enum/value pair for a generic creature subtype.
+soldier soldier	A generated enum/value pair for a generic creature subtype.
+spell counter	A generic engine phrase describing a counter applied to a spell.
+spider spider	A generated enum/value pair for a generic creature subtype.
+spirit spirit	A generated enum/value pair for a generic creature subtype.
+super state	A generic Rust parent-module path followed by a state module name.
+suspend suspend	A generated enum/value pair for a generic game keyword.
+swamp swamp	A generated enum/value pair for a generic land subtype.
+thopter thopter	A generated enum/value pair for a generic artifact subtype.
+treefolk treefolk	A generated enum/value pair for a generic creature subtype.
+untap upkeep draw	A generic ordered list of game phases.
+vampire vampire	A generated enum/value pair for a generic creature subtype.
+wish wish	A generated enum/value pair for a generic action or subtype.
+zombie zombie	A generated enum/value pair for a generic creature subtype.
+assembly worker	A generic artifact creature subtype used as a structured DSL value.
+battle cry	A generic game-mechanics keyword retained as executable DSL vocabulary.
+dragon illusion	A pair of generic creature subtypes used as structured DSL values.
+eldrazi scion	A pair of creature subtypes used as structured DSL values.
+eldrazi spawn	A pair of creature subtypes used as structured DSL values.
+elf warrior	A pair of generic creature subtypes used as structured DSL values.
+faerie rogue	A pair of generic creature subtypes used as structured DSL values.
+giant warrior	A pair of generic creature subtypes used as structured DSL values.
+goblin rogue	A pair of generic creature subtypes used as structured DSL values.
+goblin shaman	A pair of generic creature subtypes used as structured DSL values.
+goblin soldier	A pair of generic creature subtypes used as structured DSL values.
+human citizen	A pair of generic creature subtypes used as structured DSL values.
+human cleric	A pair of generic creature subtypes used as structured DSL values.
+human soldier	A pair of generic creature subtypes used as structured DSL values.
+human warrior	A pair of generic creature subtypes used as structured DSL values.
+kithkin soldier	A pair of creature subtypes used as structured DSL values.
+merfolk wizard	A pair of generic creature subtypes used as structured DSL values.
+phyrexian horror	A pair of creature subtypes used as structured DSL values.
+robot villain	A pair of generic creature subtypes used as structured DSL values.
+sand warrior	A pair of generic creature subtypes used as structured DSL values.
+soldier ally	A pair of generic creature subtypes used as structured DSL values.
+spirit warrior	A pair of generic creature subtypes used as structured DSL values.
+the command zone	A generic rules-zone phrase required by executable gameplay logic.
+the monarch	A generic game-state designation required by executable gameplay logic.
+treefolk shaman	A pair of generic creature subtypes used as structured DSL values.
+treefolk warrior	A pair of generic creature subtypes used as structured DSL values.
+urza s	A canonical land subtype represented as structured DSL vocabulary.
+zombie knight	A pair of generic creature subtypes used as structured DSL values.
+start finish	A generic workflow pair used by process orchestration code.
+get out	An ordinary English phrase used by command-line diagnostics.
+filter out	A generic data-processing phrase used by filtering code.
+push pull	A generic version-control and queue-operation phrase.
+rebuild rebuild	A repeated generic build-system operation in shell orchestration.
+unknown event	A generic protocol error used by event dispatch code.
+false summoning	Adjacent generic boolean and gameplay-state words in a UI test fixture.
+animation module	A generic software-architecture phrase naming a module that implements animation.
+fast forward	A generic version-control and timeline-navigation operation.
+flow state	A generic software state-machine phrase.
+head to head	A generic comparison phrase used for paired benchmark and tournament results.
+mana cache	A generic engine data-structure name for cached mana-production state.
+memory leak	A generic software defect classification.
+migration path	A generic software-upgrade and schema-evolution phrase.
+mirror match	A generic tournament phrase for two equivalent decks or controllers playing each other.
+never happened	An ordinary English phrase used to describe a missing event or failed side effect.
+on the job	An ordinary English phrase that can occur next to software job-level terminology.
+permission denied	A generic operating-system and authorization error.
+run behind	An ordinary English phrase used when describing evidence supporting a validation run.
+short circuit	A generic software-control-flow and electrical-engineering phrase.
+time out	A generic process-control phrase for exceeding a time limit.
+the thing	An ordinary English phrase used to identify the subject of a discussion or test.
+over the top	An ordinary English and user-interface geometry phrase.
+reverse engineer	A generic software-analysis operation.
+second guess	An ordinary English phrase for reconsidering a decision.
+pile on	An ordinary English phrase used for accumulation and ordering.
+drag down	A generic drag-and-drop and performance phrase.
+common cause	A generic diagnostic phrase for a shared underlying cause.
+run over	An ordinary English phrase used for iteration and execution.
+keep out	A generic access-control and exclusion phrase.
+over the edge	An ordinary English and user-interface geometry phrase.
+scale up	A generic infrastructure-capacity operation.
+the champion	A generic tournament role used when describing competition results.
+the provider	A generic software role for an implementation behind an interface.
+step through	A generic debugging and user-interface navigation operation.
+out of bounds	A generic validation error for an index or coordinate outside its legal range.
+cut down	A generic editing phrase for reducing the size or scope of something.
+see red	A generic cross-reference followed by a status color in operational documentation.
+into the core	A generic module-refactoring phrase naming a core software module.
+immediate action	A generic planning heading for work to perform next.
+steady progress	A generic project-management phrase.
+tl dr	A common abbreviation introducing a concise summary.
+track down	A generic debugging phrase for locating the cause of a problem.
+true identity	A generic information-modeling phrase distinguishing identity from presentation.
+repeat offender	A generic defect-triage phrase for a recurring source of failures.
+never return	An ordinary control-flow phrase describing a function or controller contract.
+dead weight	A generic engineering phrase for unused code or unnecessary payload.
+old guard	A generic testing phrase for a previous assertion or check.
+north star	A generic project-planning metaphor for a long-term direction.
+one does not	A generic grammatical phrase used to contrast two behaviors.
+far away	An ordinary phrase describing distance between a symptom and its cause.
+together as one	An ordinary phrase describing several actions completed in one sequence.
+kill switch	A generic operational safety control.
+booby trap	A generic warning for a surprising operational failure mode.
+first response	A generic incident-response and troubleshooting heading.
+turn against	An ordinary phrase that can occur across an identifier and surrounding prose.
+bring down	A generic lifecycle operation for stopping a service or agent.
+out of the way	An ordinary phrase describing layout or workflow placement.
+bring back	A generic lifecycle operation for restoring a retired service or agent.
+save life	A generic gameplay-evaluation phrase for preventing loss of player life.
+power boost	A generic gameplay-evaluation phrase for increasing a creature's power.
+single combat	A generic combat-engine phrase describing one combat event or damage step.
+break ties	A generic deterministic-ordering operation.
+start your engines	The printed name of a game mechanic; an executable corpus must spell the keyword, and a card happens to share the phrase as its title.
+web slinging	The printed name of a game mechanic; an executable corpus must spell the keyword, and a card happens to share the phrase as its title.
+clone	A common word and a Rust derive macro (`#[derive(Debug, Clone)]`); a card happens to share the word as its title.
+index	Ordinary technical English ("index", "Index-compiling machinery"); a card happens to share the word as its title.
+rust	The programming language this repository is written in; a card happens to share the word as its title.
+mask	Ordinary technical English (a bitmask); a card happens to share the word as its title.
+extract	Ordinary English verb used in doc comments; a card happens to share the word as its title.
+recover	Ordinary English verb used in doc comments; a card happens to share the word as its title.
+deliberate	Ordinary English word used in doc comments ("Deliberately three cases"); a card happens to share the word as its title.
+wizards	Appears in this repository ONLY inside the sentence declaring that no Wizards of the Coast data is present; a card happens to share the word as its title.
+oracle	The standard Magic term for a card's rules text ("Oracle text"); unavoidable in scanning tooling, and a card happens to share the word as its title.
