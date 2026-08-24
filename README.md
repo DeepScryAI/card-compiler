@@ -103,3 +103,42 @@ side tracks**.
 - Every commit that an external repository pins (a DeepScry submodule
   gitlink) is anchored by an annotated tag under `pin/` so the pinned
   commit stays fetchable regardless of how `main` moves.
+
+## IP scanning lives here
+
+This repository owns the intellectual-property scanning tooling and the
+reviewed allowlist that goes with it:
+
+* `scripts/scan_scryfall_ip.rs` — the scanner.
+* `ip_allowlist.tsv` — the reviewed allowlist of titles that must NOT count as
+  hits, each with a plain-language reason.
+
+They live here, and not in `cardsfolder-mirror`, because the mirror is moving
+toward being purely a data repository: an up-to-date but anonymized copy of the
+Forge card scripts, kept as the record of the extraction. Tooling belongs with
+the compiler that consumes that data, not inside the data itself.
+
+### Why the allowlist is not optional
+
+A card title can be an ordinary English word. Scanning this repository without
+the allowlist reports 23 hits. Twenty-two are false positives:
+
+| matched | where it actually appears |
+| --- | --- |
+| `Clone` | `#[derive(Debug, Clone, ...)]` |
+| `Index` | "Index-compiling machinery" |
+| `Rust` | "one implementation, no Rust/JS drift" |
+| `Mask` | "Mask isolating the version timestamp" |
+| `Extract`, `Recover`, `Deliberate` | ordinary verbs in doc comments |
+| `Wizards` | the sentence above declaring no such data is present |
+| `Oracle` | "Oracle text", the standard term for a card's rules text |
+
+That last row is the one to remember: **an unallowlisted scan flags the
+disclaimer that says there is no Wizards of the Coast data.** A raw hit count
+is not a measurement until the allowlist is applied.
+
+The twenty-third was genuine: a real card title used as a test fixture name in
+`scripts/scan_scryfall_ip.rs`. It has been replaced with a synthetic name. With
+the allowlist applied and that fixture fixed, this repository scans to **zero**,
+while the same allowlist still reports 5,551 occurrences elsewhere -- so the
+zero is a measurement, not a blinded scanner.
