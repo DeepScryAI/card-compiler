@@ -103,6 +103,7 @@ struct PatternEntry {
 struct ScanReport {
     target: ScanTarget,
     submodules_included: bool,
+    policy_input_paths_skipped: usize,
     patterns_from_scryfall: usize,
     global_allowlisted_patterns: usize,
     local_exception_patterns: usize,
@@ -167,13 +168,23 @@ fn main() -> Result<()> {
         .build(&wrapped_patterns)
         .context("compile normalized Scryfall pattern automaton")?;
 
+    let policy_paths = policy_paths_under_root(
+        &args.root,
+        [&args.allowlist]
+            .into_iter()
+            .chain(args.local_exceptions.as_ref())
+            .collect(),
+    )?;
     let mut tracked_files = git_tracked_files(&args.root, !args.exclude_submodules)?;
     if let Some(prefix) = args.path_prefix.as_deref() {
         tracked_files.retain(|path| path == prefix || path.starts_with(&format!("{prefix}/")));
     }
+    let policy_input_paths_skipped = tracked_files.iter().filter(|path| policy_paths.contains(*path)).count();
+    tracked_files.retain(|path| !policy_paths.contains(path));
     let mut report = ScanReport {
         target: args.target,
         submodules_included: !args.exclude_submodules,
+        policy_input_paths_skipped,
         patterns_from_scryfall: all_patterns.len(),
         global_allowlisted_patterns: allowlist.len(),
         local_exception_patterns: local_exceptions.len(),
@@ -490,6 +501,27 @@ fn active_patterns(
         .collect())
 }
 
+/// Return configured policy files that are tracked beneath this scan root.
+///
+/// An allowlist or local-exception file necessarily spells the patterns it
+/// governs. Counting that audited policy input as a repository exposure would
+/// make a clean result impossible while hiding the scanner's real target.
+fn policy_paths_under_root(root: &Path, paths: Vec<&PathBuf>) -> Result<BTreeSet<String>> {
+    let canonical_root = root
+        .canonicalize()
+        .with_context(|| format!("canonicalize scan root {}", root.display()))?;
+    let mut relative_paths = BTreeSet::new();
+    for path in paths {
+        let canonical_path = path
+            .canonicalize()
+            .with_context(|| format!("canonicalize policy input {}", path.display()))?;
+        if let Ok(relative) = canonical_path.strip_prefix(&canonical_root) {
+            relative_paths.insert(relative.to_string_lossy().replace('\\', "/"));
+        }
+    }
+    Ok(relative_paths)
+}
+
 fn git_tracked_files(root: &Path, recurse_submodules: bool) -> Result<Vec<String>> {
     let mut command = Command::new("git");
     command.arg("-C").arg(root).args(["ls-files", "-z"]);
@@ -626,5 +658,23 @@ mod tests {
             "A synthetic ordinary-English fixture for this scanner test.".to_owned(),
         )]);
         assert!(active_patterns(&patterns, &global, &local).is_err());
+    }
+
+    #[test]
+    fn policy_paths_are_skipped_only_when_they_are_under_the_scan_root() {
+        let directory = std::env::temp_dir().join(format!("cardskin-policy-path-test-{}", std::process::id()));
+        let nested = directory.join("nested");
+        fs::create_dir_all(&nested).unwrap();
+        let inside = nested.join("exceptions.tsv");
+        fs::write(&inside, "fixtureword\tA synthetic exception reason for this test.\n").unwrap();
+        let outside = std::env::temp_dir().join(format!("cardskin-policy-outside-{}.tsv", std::process::id()));
+        fs::write(&outside, "fixtureword\tA synthetic exception reason for this test.\n").unwrap();
+
+        let paths = policy_paths_under_root(&directory, vec![&inside, &outside]).unwrap();
+        assert_eq!(paths, BTreeSet::from(["nested/exceptions.tsv".to_owned()]));
+
+        fs::remove_file(inside).unwrap();
+        fs::remove_file(outside).unwrap();
+        fs::remove_dir_all(directory).unwrap();
     }
 }
