@@ -37,6 +37,12 @@ use uuid::Uuid;
 #[command(about = "Extract the anonymous numeric/Oracle identity bridge from DeepScry's catalog")]
 struct Args {
     /// DeepScry card_catalog.tsv containing id, name, and oracle_id columns.
+    ///
+    /// An anonymized catalog cannot regenerate these name-derived tables because
+    /// it no longer contains names, and that is the point of anonymizing it.
+    /// Rejecting that input is therefore correct behavior, not a missing-data
+    /// fallback: callers must supply the historical title-bearing catalog that
+    /// corresponds to the table they are reproducing.
     #[arg(long)]
     source: PathBuf,
 
