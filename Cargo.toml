@@ -2,10 +2,7 @@
 name = "cardskin"
 version = "0.1.0"
 edition = "2021"
-# NOTE: license intentionally left unset. DeepScry's own repo is
-# proprietary; card-scripts-mirror is GPLv3 (inherited from Forge). This
-# repo's license is an open question for the owner, not something to guess
-# at — set it explicitly before any external consumer or publish step.
+license = "BSD-3-Clause"
 description = "Index-compiling machinery for DeepScry's card-skin art index: the SCDT binary wire format and the build-time generator that produces it from Scryfall data."
 
 [features]

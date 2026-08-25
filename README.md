@@ -70,11 +70,10 @@ move in the DeepScry repository).
   parent DeepScry checkout keeps its `cardsfolder` symlink and its web
   build keeps reading scripts directly; this crate is consumed as an
   ordinary Cargo path dependency, nothing more, for now.
-- **The mirror's own Scryfall-touching build scripts**
-  (`generate_uuid_trie.rs`, `scan_scryfall_ip.rs`,
-  `scripts/lib/scryfall_bulk.rs`), currently still in
-  `card-scripts-mirror`. Planned, sequenced, not started — see the plan
-  document's section 6.
+- **The mirror's remaining Scryfall-touching producer scripts.** The IP
+  scanner and its shared Scryfall bulk-data helper are here now; moving the
+  other producers, including `generate_uuid_trie.rs`, remains planned and
+  sequenced. See the plan document's section 6.
 
 ## Building and testing
 
@@ -86,9 +85,15 @@ cargo build --target wasm32-unknown-unknown   # wire.rs alone, browser target
 
 ## License
 
-Not yet set. DeepScry's own repository is proprietary; `card-scripts-mirror`
-is GPLv3 (inherited from Forge). This repository's license is an open
-question for the project owner — do not assume one.
+This repository is licensed under the BSD 3-Clause License; see `LICENSE`.
+
+The IP scanner, `scripts/lib/scryfall_bulk.rs`, and `ip_allowlist.tsv` first
+appeared in the root commit of DeepScryAI's CardScriptsMirror numeric-pipeline
+history and were authored by DeepScryAI contributors. Card-compiler adopted
+those files from that repository; they were not derived from Forge source
+code. CardScriptsMirror is GPL-3.0 because it carries stripped Forge-derived
+card data, but that data provenance does not attach to these independently
+authored tools. Their copyright holder releases them here under BSD-3-Clause.
 
 ## Single-threaded development policy
 
@@ -120,8 +125,8 @@ the compiler that consumes that data, not inside the data itself.
 
 ### Why the allowlist is not optional
 
-A card title can be an ordinary English word. Scanning this repository without
-the allowlist reports 23 hits. Twenty-two are false positives:
+A card title can be an ordinary English word. An unallowlisted scan can flag
+ordinary source language, including terms such as these:
 
 | matched | where it actually appears |
 | --- | --- |
@@ -133,12 +138,16 @@ the allowlist reports 23 hits. Twenty-two are false positives:
 | `Wizards` | the sentence above declaring no such data is present |
 | `Oracle` | "Oracle text", the standard term for a card's rules text |
 
-That last row is the one to remember: **an unallowlisted scan flags the
+That last row is the one to remember: **an unallowlisted scan can flag the
 disclaimer that says there is no Wizards of the Coast data.** A raw hit count
-is not a measurement until the allowlist is applied.
+is not a measurement until the allowlist is applied. The old README recorded a
+23-hit figure without a runnable scanner in this repository and without the
+input snapshot and exact command needed to reproduce it, so that figure has
+been removed. Publish future counts only with the exact command, Scryfall cache
+identity, scanned Git revision, and resulting report.
 
-The twenty-third was genuine: a real card title used as a test fixture name in
-`scripts/scan_scryfall_ip.rs`. It has been replaced with a synthetic name. With
-the allowlist applied and that fixture fixed, this repository scans to **zero**,
-while the same allowlist still reports 5,551 occurrences elsewhere -- so the
-zero is a measurement, not a blinded scanner.
+The scanner's focused tests, including the shared bulk-data parser, run with:
+
+```sh
+rust-script --test scripts/scan_scryfall_ip.rs
+```
