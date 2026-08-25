@@ -186,7 +186,15 @@ CardScriptsMirror remains the committed anonymous data repository. Its
 production programs are moving here additively, one focused, parity-tested
 piece at a time; no producer or presentation artifact is removed from the
 mirror until a fixed fixture proves byte-identical output. The initial ports
-are `scripts/mirror/pack_cardset.rs`, `make_skin_manifest.rs`, and
-`make_provenance.rs`, sharing the deterministic CAS helper. They write
+are `scripts/mirror/extract_catalog_ids.rs`, `pack_cardset.rs`,
+`make_skin_manifest.rs`, and `make_provenance.rs`, sharing the deterministic
+CAS helper. They write
 generated output only to explicitly selected local paths; they do not add card
 data, Scryfall downloads, skins, or cardsets to this repository.
+
+`extract_catalog_ids.rs` deliberately accepts a caller-supplied, title-bearing
+catalog and emits only one-way digests. The current anonymized DeepScry catalog
+is not that input and must fail loudly rather than manufacture a different
+identity table. Parity is established against the immutable historical catalog
+revision that produced the mirror's checked-in tables; the compiler stores
+neither that source catalog nor its generated output.
