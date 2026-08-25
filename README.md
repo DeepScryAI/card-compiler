@@ -212,3 +212,9 @@ path, where the original and migrated scripts produce byte-identical output.
 The frozen token-generation success path is intentionally not claimed without
 the historical named token source: the imported `token_genesis` guard rejects a
 substitute source rather than guessing what that source should contain.
+
+`generate_title_catalog.rs` has the same bounded proof: its focused tests and
+synthetic card-only original-versus-migrated output parity establish the
+generator contract without claiming historical token output reproduction.
+Its test fixtures use synthetic titles so this code-only repository does not
+retain card titles while testing title-table structure and determinism.
