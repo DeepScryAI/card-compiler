@@ -188,7 +188,8 @@ piece at a time; no producer or presentation artifact is removed from the
 mirror until a fixed fixture proves byte-identical output. The initial ports
 are `scripts/mirror/extract_catalog_ids.rs`, `pack_cardset.rs`,
 `make_artpack.rs`, `make_skin_manifest.rs`, and `make_provenance.rs`, sharing
-the deterministic CAS helper. They write
+the deterministic CAS helper. `make_wotc_test_skin.rs` is also ported; it
+creates only a local, visibly prefixed human-test skin. They write
 generated output only to explicitly selected local paths; they do not add card
 data, Scryfall downloads, skins, or cardsets to this repository.
 
