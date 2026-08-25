@@ -206,3 +206,9 @@ fixture: the original and migrated programs produce byte-identical local JSON.
 That proves the portable generator behavior, not reproduction of a historical
 mirror artifact; no such skin output is committed and no historical named
 fixture is required for this producer.
+
+`generate_body_catalog.rs` is proven through its synthetic card-only generation
+path, where the original and migrated scripts produce byte-identical output.
+The frozen token-generation success path is intentionally not claimed without
+the historical named token source: the imported `token_genesis` guard rejects a
+substitute source rather than guessing what that source should contain.
