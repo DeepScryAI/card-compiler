@@ -16,7 +16,7 @@
 
 use aho_corasick::{AhoCorasickBuilder, AhoCorasickKind};
 use anyhow::{bail, Context, Result};
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 use serde::Serialize;
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs::{self, File};
@@ -31,6 +31,11 @@ const MAX_REPORTED_HITS: usize = 20_000;
 #[derive(Parser, Debug)]
 #[command(about = "Scan tracked repository text for normalized Scryfall titles and Oracle text")]
 struct Args {
+    /// The repository being measured. This is deliberately explicit: the
+    /// compiler, DeepScry, and CardScriptsMirror use one scanner contract.
+    #[arg(long, value_enum)]
+    target: ScanTarget,
+
     /// Git repository whose tracked files will be scanned.
     #[arg(long)]
     root: PathBuf,
@@ -47,6 +52,11 @@ struct Args {
     #[arg(long, default_value = "ip_allowlist.tsv")]
     allowlist: PathBuf,
 
+    /// Checked-in, repository-specific false positives. Only DeepScry may use
+    /// this: ordinary-English title decisions belong in the global allowlist.
+    #[arg(long)]
+    local_exceptions: Option<PathBuf>,
+
     /// Machine-readable result; kept below the untracked cache by default.
     #[arg(long, default_value = ".cache/reports/ip-scan.json")]
     report: PathBuf,
@@ -59,6 +69,15 @@ struct Args {
     /// independently versioned repositories.
     #[arg(long)]
     exclude_submodules: bool,
+}
+
+/// The three repositories measured by the canonical scanner.
+#[derive(Clone, Copy, Debug, Eq, PartialEq, ValueEnum, Serialize)]
+#[serde(rename_all = "kebab-case")]
+enum ScanTarget {
+    CardCompiler,
+    DeepScry,
+    CardScriptsMirror,
 }
 
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize)]
@@ -82,9 +101,11 @@ struct PatternEntry {
 
 #[derive(Debug, Serialize)]
 struct ScanReport {
+    target: ScanTarget,
     submodules_included: bool,
     patterns_from_scryfall: usize,
-    allowlisted_patterns: usize,
+    global_allowlisted_patterns: usize,
+    local_exception_patterns: usize,
     active_patterns: usize,
     tracked_files_considered: usize,
     text_files_scanned: usize,
@@ -116,14 +137,19 @@ fn main() -> Result<()> {
     if !args.root.is_dir() {
         bail!("scan root is not a directory: {}", args.root.display());
     }
+    if args.local_exceptions.is_some() && args.target != ScanTarget::DeepScry {
+        bail!("--local-exceptions is only valid with --target deepscry");
+    }
     scryfall_bulk::ensure_cache(&args.cache, args.refresh)?;
     let all_patterns = build_patterns(&args.cache)?;
-    let allowlist = load_allowlist(&args.allowlist)?;
-    let active_patterns: Vec<PatternEntry> = all_patterns
-        .values()
-        .filter(|entry| !allowlist.contains_key(&entry.normalized))
-        .cloned()
-        .collect();
+    let allowlist = load_exceptions(&args.allowlist, "global allowlist")?;
+    let local_exceptions = args
+        .local_exceptions
+        .as_deref()
+        .map(|path| load_exceptions(path, "DeepScry local exceptions"))
+        .transpose()?
+        .unwrap_or_default();
+    let active_patterns = active_patterns(&all_patterns, &allowlist, &local_exceptions)?;
     if active_patterns.is_empty() {
         bail!("all Scryfall patterns were allowlisted; refusing a vacuous scan");
     }
@@ -146,9 +172,11 @@ fn main() -> Result<()> {
         tracked_files.retain(|path| path == prefix || path.starts_with(&format!("{prefix}/")));
     }
     let mut report = ScanReport {
+        target: args.target,
         submodules_included: !args.exclude_submodules,
         patterns_from_scryfall: all_patterns.len(),
-        allowlisted_patterns: allowlist.len(),
+        global_allowlisted_patterns: allowlist.len(),
+        local_exception_patterns: local_exceptions.len(),
         active_patterns: active_patterns.len(),
         tracked_files_considered: tracked_files.len(),
         text_files_scanned: 0,
@@ -372,15 +400,13 @@ fn insert_pattern(
     oracle_id: Option<String>,
 ) {
     let normalized = normalize_for_scan(original);
-    let words = normalized.split_whitespace().count();
-    // A repository-wide scan cannot meaningfully treat ordinary identifiers
-    // such as `copy`, `index`, or `return` as evidence merely because an
-    // unrelated card has that one-word title. Require multi-word titles and a
-    // substantive Oracle sentence; exact forbidden script fields are audited
-    // separately by the corpus generator.
+    // Single-word titles are included deliberately. The global allowlist is
+    // where reviewed ordinary-English collisions belong; dropping them here
+    // would make the allowlist inert and give a different answer from the
+    // DeepScry scan.
     let is_actionable = match kind {
-        PatternKind::CardTitle => words >= 2,
-        PatternKind::OracleText => words >= 4 && normalized.len() >= 20,
+        PatternKind::CardTitle => normalized.len() >= 4,
+        PatternKind::OracleText => normalized.split_whitespace().count() >= 4 && normalized.len() >= 20,
     };
     if !is_actionable {
         return;
@@ -412,8 +438,8 @@ fn normalize_for_scan(text: &str) -> String {
     normalized
 }
 
-fn load_allowlist(path: &Path) -> Result<BTreeMap<String, String>> {
-    let text = fs::read_to_string(path).with_context(|| format!("read reviewed allowlist {}", path.display()))?;
+fn load_exceptions(path: &Path, label: &str) -> Result<BTreeMap<String, String>> {
+    let text = fs::read_to_string(path).with_context(|| format!("read {label} {}", path.display()))?;
     let mut entries = BTreeMap::new();
     for (index, line) in text.lines().enumerate() {
         let line = line.trim();
@@ -422,23 +448,46 @@ fn load_allowlist(path: &Path) -> Result<BTreeMap<String, String>> {
         }
         let (pattern, reason) = line.split_once('\t').with_context(|| {
             format!(
-                "allowlist line {} must be '<normalized pattern><TAB><plain-language reason>'",
+                "{label} line {} must be '<normalized pattern><TAB><plain-language reason>'",
                 index + 1
             )
         })?;
         let pattern = pattern.trim();
         let reason = reason.trim();
         if normalize_for_scan(pattern) != pattern {
-            bail!("allowlist line {} is not normalized: {pattern:?}", index + 1);
+            bail!("{label} line {} is not normalized: {pattern:?}", index + 1);
         }
         if reason.len() < 12 {
-            bail!("allowlist line {} has no meaningful justification", index + 1);
+            bail!("{label} line {} has no meaningful justification", index + 1);
         }
         if entries.insert(pattern.to_owned(), reason.to_owned()).is_some() {
-            bail!("duplicate allowlist pattern on line {}: {pattern:?}", index + 1);
+            bail!("duplicate {label} pattern on line {}: {pattern:?}", index + 1);
         }
     }
     Ok(entries)
+}
+
+fn active_patterns(
+    all_patterns: &BTreeMap<String, PatternEntry>,
+    global_allowlist: &BTreeMap<String, String>,
+    local_exceptions: &BTreeMap<String, String>,
+) -> Result<Vec<PatternEntry>> {
+    if let Some(overlap) = global_allowlist
+        .keys()
+        .find(|pattern| local_exceptions.contains_key(*pattern))
+    {
+        bail!(
+            "DeepScry local exception {overlap:?} duplicates the global allowlist; \
+             ordinary-English title policy belongs in the global list"
+        );
+    }
+    Ok(all_patterns
+        .values()
+        .filter(|entry| {
+            !global_allowlist.contains_key(&entry.normalized) && !local_exceptions.contains_key(&entry.normalized)
+        })
+        .cloned()
+        .collect())
 }
 
 fn git_tracked_files(root: &Path, recurse_submodules: bool) -> Result<Vec<String>> {
@@ -527,8 +576,7 @@ mod tests {
         );
         // Only the operand VALUE is exempt: a card title elsewhere on the same
         // line still counts.
-        let with_a_title =
-            "SVar:C:DB$ Clone | NewName$ Fixture Drake Qzx | KW$ Flying & First Strike & Vigilance\n";
+        let with_a_title = "SVar:C:DB$ Clone | NewName$ Fixture Drake Qzx | KW$ Flying & First Strike & Vigilance\n";
         assert_eq!(
             matched_patterns_in_file("cards/00/00/00/00000001.txt", with_a_title, &matcher).len(),
             1
@@ -538,10 +586,45 @@ mod tests {
     }
 
     #[test]
-    fn allowlist_requires_a_plain_language_reason() {
+    fn exception_file_requires_a_plain_language_reason() {
         let temporary = std::env::temp_dir().join(format!("cardsmirror-allowlist-test-{}.tsv", std::process::id()));
         fs::write(&temporary, "cat\tshort\n").unwrap();
-        assert!(load_allowlist(&temporary).is_err());
+        assert!(load_exceptions(&temporary, "test exceptions").is_err());
         fs::remove_file(temporary).unwrap();
+    }
+
+    #[test]
+    fn single_word_titles_are_selected_then_global_allowlist_applies() {
+        let mut patterns = BTreeMap::new();
+        insert_pattern(&mut patterns, "Fixtureword", PatternKind::CardTitle, None);
+        assert!(
+            patterns.contains_key("fixtureword"),
+            "single-word titles must reach policy review"
+        );
+
+        let global = BTreeMap::from([(
+            "fixtureword".to_owned(),
+            "A synthetic ordinary-English fixture for this scanner test.".to_owned(),
+        )]);
+        assert!(active_patterns(&patterns, &global, &BTreeMap::new())
+            .unwrap()
+            .is_empty());
+    }
+
+    #[test]
+    fn deepscry_local_exception_is_separate_and_cannot_shadow_global_policy() {
+        let mut patterns = BTreeMap::new();
+        insert_pattern(&mut patterns, "Fixtureword", PatternKind::CardTitle, None);
+        let local = BTreeMap::from([(
+            "fixtureword".to_owned(),
+            "A synthetic repository-specific false positive for this test.".to_owned(),
+        )]);
+        assert!(active_patterns(&patterns, &BTreeMap::new(), &local).unwrap().is_empty());
+
+        let global = BTreeMap::from([(
+            "fixtureword".to_owned(),
+            "A synthetic ordinary-English fixture for this scanner test.".to_owned(),
+        )]);
+        assert!(active_patterns(&patterns, &global, &local).is_err());
     }
 }

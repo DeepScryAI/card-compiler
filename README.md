@@ -114,14 +114,32 @@ side tracks**.
 This repository owns the intellectual-property scanning tooling and the
 reviewed allowlist that goes with it:
 
-* `scripts/scan_scryfall_ip.rs` — the scanner.
-* `ip_allowlist.tsv` — the reviewed allowlist of titles that must NOT count as
-  hits, each with a plain-language reason.
+* `scripts/scan_scryfall_ip.rs` — the one scanner for card-compiler,
+  DeepScry, and CardScriptsMirror.
+* `ip_allowlist.tsv` — the canonical reviewed allowlist of titles that must
+  NOT count as hits because they are ordinary English words or phrases. Each
+  entry has a plain-language reason.
 
 They live here, and not in `cardsfolder-mirror`, because the mirror is moving
 toward being purely a data repository: an up-to-date but anonymized copy of the
 Forge card scripts, kept as the record of the extraction. Tooling belongs with
 the compiler that consumes that data, not inside the data itself.
+
+The scanner takes an explicit target and root so every report states which of
+the three repositories it measured. A typical invocation is:
+
+```sh
+rust-script scripts/scan_scryfall_ip.rs \
+  --target card-compiler --root . \
+  --cache .cache/scryfall/default_cards.json \
+  --report .cache/reports/card-compiler-ip-scan.json
+```
+
+For DeepScry only, pass its checked-in local-exception file with
+`--local-exceptions`. That file is for a confirmed false positive unique to
+DeepScry; it cannot redefine whether a title is ordinary English. An entry
+duplicated in the global allowlist is a loud error. Card-compiler and
+CardScriptsMirror intentionally have no local exception input.
 
 ### Why the allowlist is not optional
 
@@ -140,11 +158,14 @@ ordinary source language, including terms such as these:
 
 That last row is the one to remember: **an unallowlisted scan can flag the
 disclaimer that says there is no Wizards of the Coast data.** A raw hit count
-is not a measurement until the allowlist is applied. The old README recorded a
-23-hit figure without a runnable scanner in this repository and without the
-input snapshot and exact command needed to reproduce it, so that figure has
-been removed. Publish future counts only with the exact command, Scryfall cache
-identity, scanned Git revision, and resulting report.
+is not a measurement until the allowlist is applied. Single-word titles are
+included deliberately and reviewed through that allowlist; silently discarding
+them would make the headline count depend on which scanner happened to run.
+The old README recorded a 23-hit figure without a runnable scanner in this
+repository and without the input snapshot and exact command needed to reproduce
+it, so that figure has been removed. Publish future counts only with the exact
+command, Scryfall cache identity, scanned Git revision, target, and resulting
+report.
 
 The scanner's focused tests, including the shared bulk-data parser, run with:
 
