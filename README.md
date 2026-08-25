@@ -186,7 +186,7 @@ CardScriptsMirror remains the committed anonymous data repository. Its
 production programs are moving here additively, one focused, parity-tested
 piece at a time; no producer or presentation artifact is removed from the
 mirror until a fixed fixture proves byte-identical output. The initial ports
-are `scripts/mirror/pack_cardset.rs` and `make_skin_manifest.rs`, sharing the
-deterministic CAS helper. They write generated output only to explicitly
-selected local paths; they do not add card data, Scryfall downloads, skins, or
-cardsets to this repository.
+are `scripts/mirror/pack_cardset.rs`, `make_skin_manifest.rs`, and
+`make_provenance.rs`, sharing the deterministic CAS helper. They write
+generated output only to explicitly selected local paths; they do not add card
+data, Scryfall downloads, skins, or cardsets to this repository.
