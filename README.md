@@ -188,8 +188,9 @@ piece at a time; no producer or presentation artifact is removed from the
 mirror until a fixed fixture proves byte-identical output. The initial ports
 are `scripts/mirror/extract_catalog_ids.rs`, `pack_cardset.rs`,
 `make_artpack.rs`, `make_skin_manifest.rs`, and `make_provenance.rs`, sharing
-the deterministic CAS helper. `make_wotc_test_skin.rs` is also ported; it
-creates only a local, visibly prefixed human-test skin. They write
+the deterministic CAS helper. `extract_card_skin.rs` and
+`make_wotc_test_skin.rs` are also ported; both create only local presentation
+output. They write
 generated output only to explicitly selected local paths; they do not add card
 data, Scryfall downloads, skins, or cardsets to this repository.
 
@@ -199,3 +200,9 @@ is not that input and must fail loudly rather than manufacture a different
 identity table. Parity is established against the immutable historical catalog
 revision that produced the mirror's checked-in tables; the compiler stores
 neither that source catalog nor its generated output.
+
+`extract_card_skin.rs` is proven on a synthetic catalog and synthetic Scryfall
+fixture: the original and migrated programs produce byte-identical local JSON.
+That proves the portable generator behavior, not reproduction of a historical
+mirror artifact; no such skin output is committed and no historical named
+fixture is required for this producer.
