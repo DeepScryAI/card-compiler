@@ -515,7 +515,7 @@ mod tests {
     fn keyword_operand_lists_are_mechanics_vocabulary_not_expression() {
         let matcher = AhoCorasickBuilder::new()
             .kind(Some(AhoCorasickKind::ContiguousNFA))
-            .build([" flying first strike vigilance ", " spitting drake "])
+            .build([" flying first strike vigilance ", " fixture drake qzx "])
             .unwrap();
         // The keyword list normalizes to a real card's Oracle sentence; that
         // is mechanics vocabulary, so it must not count as a hit.
