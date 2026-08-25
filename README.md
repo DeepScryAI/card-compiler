@@ -179,3 +179,14 @@ Every push to `main` runs formatting, the dependency-free WebAssembly wire
 build, builder tests, strict Clippy, and the scanner's focused tests. The
 scanner and compiler are therefore checked before CardScriptsMirror's nightly
 job is permitted to consume the moving `main` revision.
+
+## Mirror production migration
+
+CardScriptsMirror remains the committed anonymous data repository. Its
+production programs are moving here additively, one focused, parity-tested
+piece at a time; no producer or presentation artifact is removed from the
+mirror until a fixed fixture proves byte-identical output. The first migrated
+pair is `scripts/mirror/pack_cardset.rs` and its shared deterministic CAS
+helper. It writes generated output only to an explicitly selected local path;
+it does not add card data, Scryfall downloads, skins, or cardsets to this
+repository.
