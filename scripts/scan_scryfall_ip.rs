@@ -579,15 +579,15 @@ mod tests {
     fn card_scan_ignores_structural_type_records_but_not_executable_records() {
         let matcher = AhoCorasickBuilder::new()
             .kind(Some(AhoCorasickKind::ContiguousNFA))
-            .build([" human soldier "])
+            .build([" fixture qzxclass "])
             .unwrap();
-        let text = "Types:Creature Human Soldier\nSVar:X:DB$ Effect | Name$ Human Soldier\n";
+        let text = "Types:Creature Fixture Qzxclass\nSVar:X:DB$ Effect | Name$ Fixture Qzxclass\n";
         assert_eq!(
             matched_patterns_in_file("cards/00/00/00/00000001.txt", text, &matcher).len(),
             1
         );
         assert_eq!(
-            matched_patterns_in_file("README.md", "Types: Human Soldier", &matcher).len(),
+            matched_patterns_in_file("README.md", "Types: Fixture Qzxclass", &matcher).len(),
             1
         );
     }
@@ -596,7 +596,7 @@ mod tests {
     fn keyword_operand_lists_are_mechanics_vocabulary_not_expression() {
         let matcher = AhoCorasickBuilder::new()
             .kind(Some(AhoCorasickKind::ContiguousNFA))
-            .build([" flying first strike vigilance ", " fixture drake qzx "])
+            .build([" flying first strike vigilance ", " fixture qzxmark "])
             .unwrap();
         // The keyword list normalizes to a real card's Oracle sentence; that
         // is mechanics vocabulary, so it must not count as a hit.
@@ -608,7 +608,7 @@ mod tests {
         );
         // Only the operand VALUE is exempt: a card title elsewhere on the same
         // line still counts.
-        let with_a_title = "SVar:C:DB$ Clone | NewName$ Fixture Drake Qzx | KW$ Flying & First Strike & Vigilance\n";
+        let with_a_title = "SVar:C:DB$ Clone | NewName$ Fixture Qzxmark | KW$ Flying & First Strike & Vigilance\n";
         assert_eq!(
             matched_patterns_in_file("cards/00/00/00/00000001.txt", with_a_title, &matcher).len(),
             1

@@ -158,3 +158,96 @@ recover	Ordinary English verb used in doc comments; a card happens to share the 
 deliberate	Ordinary English word used in doc comments ("Deliberately three cases"); a card happens to share the word as its title.
 wizards	Appears in this repository ONLY inside the sentence declaring that no Wizards of the Coast data is present; a card happens to share the word as its title.
 oracle	The standard Magic term for a card's rules text ("Oracle text"); unavoidable in scanning tooling, and a card happens to share the word as its title.
+acquire	A common English verb used in cache and resource-acquisition code.
+ambiguity	A common English noun used for identity-resolution and error handling.
+artifacts	A generic engineering noun for generated files and build outputs.
+assemble	A common English verb for constructing deterministic output.
+away	An ordinary English adverb used in explanatory prose.
+bound	A common mathematical and programming term for a limit.
+call	A generic programming verb for invoking a function or service.
+catalog	A generic collection/index term central to compiler documentation.
+catch	A common English and programming verb for error handling.
+char	A standard programming abbreviation for a character value.
+claim	A common English noun and verb used in documentation.
+clear	A common English verb used for state and collection operations.
+collision	A generic hashing and identity-resolution term.
+commit	A standard version-control noun and verb.
+consume	A common English verb used for parsing and ownership semantics.
+continue	A standard control-flow keyword and ordinary English verb.
+contract	A generic software-interface and legal term.
+copied	An ordinary English past-tense verb used in migration documentation.
+copy	A generic programming and game-mechanics verb.
+dead	A common English adjective used in code and diagnostics.
+demand	A common English noun and verb used in requirement descriptions.
+development	A generic software-work noun.
+discarding	An ordinary English verb used in policy explanations.
+down	A common English directional adverb used in prose.
+drake	A common English animal name and generic creature noun.
+ends	A common English verb used in lifecycle documentation.
+error	A standard software diagnostic term.
+everywhere	An ordinary English adverb used in documentation.
+exclude	A generic filtering verb used in scanner and packaging code.
+expansion	A common English noun used for data growth and processing.
+failure	A standard software diagnostic noun.
+fall	A common English verb used in prose and control descriptions.
+fast	A common English adjective used for performance descriptions.
+find	A standard search and lookup verb.
+flatten	A generic collection-transformation verb.
+flying first strike vigilance	A sequence of generic game-mechanics keywords used in scanner tests.
+genesis	An ordinary English noun for an origin, used for the frozen allocation block.
+give	A common English verb used in explanatory prose.
+gremlin	A generic mythological creature noun.
+hide	A common English verb used for visibility behavior.
+human	A common English noun and generic creature type.
+hunting	A common English activity noun and verb.
+leave	A common English verb used in lifecycle documentation.
+liability	A generic legal and engineering-risk noun.
+loss	A generic English noun used in diagnostics and licensing text.
+manifest	A generic software packaging and metadata term.
+memory	A standard computing-resource noun.
+modified	A common English adjective used in change descriptions.
+never	An ordinary English adverb used in assertions and policy prose.
+order	A generic sequencing and sorting term.
+override	A standard software configuration and dispatch term.
+panic	A standard Rust runtime term and ordinary English noun.
+progress	A generic workflow and status noun.
+pull	A standard version-control and data-transfer verb.
+pure	A common English adjective used in functional-programming prose.
+purge	A generic removal verb used in scrub documentation.
+push	A standard version-control and data-transfer verb.
+python	A programming-language name and common English animal noun.
+ready	A common English state adjective.
+reason	A generic explanatory noun used in diagnostics.
+reduce	A common English and functional-programming verb.
+refresh	A generic cache and user-interface verb.
+refuse	A common English verb used for validation failures.
+regenerate	A generic build and data-production verb.
+regeneration	A generic build and data-production noun.
+reinterpret	A standard parsing and type-system verb.
+reject	A standard validation and parser verb.
+release	A generic software-lifecycle noun and verb.
+remove	A generic collection and lifecycle verb.
+resize	A generic memory and buffer-management verb.
+response	A generic networking and API noun.
+return	A standard control-flow keyword and ordinary English verb.
+returned	An ordinary English past-tense verb used in API documentation.
+shard	A common English noun used for partitions and fragments.
+snake	A common English animal name and generic creature noun.
+snap	A common English verb and noun.
+soldier	A common English noun and generic creature type.
+spells	A generic game-mechanics plural noun.
+status	A standard software-state noun.
+strictly better	A generic comparison phrase used in deterministic selection.
+success	A standard software outcome noun.
+supply	A common English noun and verb.
+survive	A common English verb used in lifecycle documentation.
+take	A common English verb used in explanatory prose.
+their	A common English possessive pronoun.
+there	A common English locative adverb.
+transpose	A generic data-transformation verb.
+turn	A common English verb and generic game-mechanics term.
+wanted	A common English adjective used in selection code.
+warning	A standard software diagnostic noun.
+what	A common English interrogative pronoun.
+when	A common English temporal conjunction.
+where	A common English locative conjunction.

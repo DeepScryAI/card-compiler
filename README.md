@@ -1,9 +1,9 @@
 # card-compiler
 
 Index-compiling machinery over open Forge card scripts and open Scryfall
-data. This repository contains **no Wizards of the Coast card data and no
-other third-party intellectual property** — no card titles, no rules text,
-no images.
+data. This repository contains **no third-party card data or other
+third-party intellectual property** — no card titles, no rules text, no
+images.
 
 That claim is the reason this repository exists, and it is a constraint,
 not a description. Anyone contributing here must keep it true:
@@ -153,14 +153,14 @@ ordinary source language, including terms such as these:
 | `Rust` | "one implementation, no Rust/JS drift" |
 | `Mask` | "Mask isolating the version timestamp" |
 | `Extract`, `Recover`, `Deliberate` | ordinary verbs in doc comments |
-| `Wizards` | the sentence above declaring no such data is present |
 | `Oracle` | "Oracle text", the standard term for a card's rules text |
 
-That last row is the one to remember: **an unallowlisted scan can flag the
-disclaimer that says there is no Wizards of the Coast data.** A raw hit count
-is not a measurement until the allowlist is applied. Single-word titles are
-included deliberately and reviewed through that allowlist; silently discarding
-them would make the headline count depend on which scanner happened to run.
+That last row is the one to remember: **an unallowlisted scan can flag an
+ordinary technical disclaimer even when the repository contains no card data.**
+A raw hit count is not a measurement until the allowlist is applied. Single-word
+titles are included deliberately and reviewed through that allowlist; silently
+discarding them would make the headline count depend on which scanner happened
+to run.
 The old README recorded a 23-hit figure without a runnable scanner in this
 repository and without the input snapshot and exact command needed to reproduce
 it, so that figure has been removed. Publish future counts only with the exact
