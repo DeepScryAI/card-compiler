@@ -172,3 +172,10 @@ The scanner's focused tests, including the shared bulk-data parser, run with:
 ```sh
 rust-script --test scripts/scan_scryfall_ip.rs
 ```
+
+## Continuous integration
+
+Every push to `main` runs formatting, the dependency-free WebAssembly wire
+build, builder tests, strict Clippy, and the scanner's focused tests. The
+scanner and compiler are therefore checked before CardScriptsMirror's nightly
+job is permitted to consume the moving `main` revision.

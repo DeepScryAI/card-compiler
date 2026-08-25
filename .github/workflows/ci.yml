@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  cardskin:
+    name: cardskin wire and builder
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Formatting
+        run: cargo fmt --check
+      - name: Wire-only dependency boundary
+        run: |
+          test "$(cargo tree --no-default-features --prefix none | wc -l)" -eq 1
+          cargo build --no-default-features --target wasm32-unknown-unknown
+      - name: Builder tests and lint
+        run: |
+          cargo test --features builder
+          cargo clippy --all-targets --features builder -- -D warnings
+
+  scanner:
+    name: IP scanner focused tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: rust-script
+      - name: Scanner tests
+        run: rust-script --test scripts/scan_scryfall_ip.rs
