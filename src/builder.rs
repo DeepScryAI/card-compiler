@@ -115,7 +115,7 @@ impl ScryfallRecord {
 
     /// Is this a Scryfall **Art Series** printing? Such printings ship a
     /// rotated, full-bleed, often signed version of the card art under the
-    /// `memorabilia` set type (e.g. the `atla`/`aone`/`afin` Art Series). Their
+    /// `memorabilia` set type (for example, Art Series expansion identifiers). Their
     /// face illustrations differ from the normal printing's, so when the SAME
     /// card name has both a normal and an Art Series printing we must NOT let
     /// the Art Series art win the lookup key — that is the ds-1242 defect
@@ -436,8 +436,8 @@ mod tests {
 
     #[test]
     fn art_series_printing_never_overrides_normal_art() {
-        // ds-1242: a card had BOTH a normal `tla` printing
-        // AND an `atla` Art Series printing (layout=art_series, set_type=
+        // ds-1242: a card had BOTH a normal printing
+        // AND an Art Series printing (layout=art_series, set_type=
         // memorabilia) sharing the SAME released_at. The Art Series art (rotated
         // / signed full-bleed) must NEVER win the lookup key — even on a date
         // tie where it might otherwise survive as the incumbent.
@@ -474,7 +474,7 @@ mod tests {
         assert_eq!(
             uuid_to_string(&e.uuid),
             "ec27a466-5457-44c6-a842-1de7d3788d66",
-            "the normal tla printing must win, not the atla Art Series"
+            "the normal printing must win, not the Art Series printing"
         );
     }
 

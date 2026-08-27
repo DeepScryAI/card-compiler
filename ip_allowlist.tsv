@@ -11,6 +11,13 @@ on an adventure	A generic state-transition phrase required in engine narration.
 plus one	A generic arithmetic phrase used by counters and index calculations.
 poison counter	A generic game-object phrase required in engine narration.
 red mana	A generic structured game-resource phrase.
+mana	A generic game-resource and rules-engine term used throughout card-game software.
+matcher	A generic software term for a pattern-matching component.
+minigame	A generic game-design term for a smaller game embedded inside another game.
+radix	A generic mathematics and computer-science term for a numeral-system base.
+mul	A generic abbreviation for multiplication in numeric source code.
+pre	A generic prefix meaning before, used in tests and explanatory prose.
+vec	The conventional Rust abbreviation and type name for a vector collection.
 the core	A generic software-architecture phrase.
 the end	An ordinary English phrase and generic phase/state label.
 the general	An ordinary English phrase used in explanatory prose.

@@ -161,6 +161,33 @@ A raw hit count is not a measurement until the allowlist is applied. Single-word
 titles are included deliberately and reviewed through that allowlist; silently
 discarding them would make the headline count depend on which scanner happened
 to run.
+
+The scanner reports three independent semantic buckets:
+
+* `full_title` matches complete normalized Scryfall card or face titles;
+* `distinctive_title_word` is computed live by tokenizing every title,
+  normalizing only grammatical possessive suffixes, subtracting Aspell's fully
+  expanded `en_US` dictionary, and then subtracting exact reviewed single-word
+  entries from `ip_allowlist.tsv`;
+* `full_oracle_text` matches a complete normalized Oracle-text body. It does
+  **not** generate Oracle-text n-grams; adding those would be a separate scanner
+  policy because it greatly expands both the candidate set and ordinary rules
+  vocabulary that requires review.
+
+Counts for patterns, active patterns, and file/pattern hits are broken down by
+those buckets in the JSON report. A normalized pattern can belong to more than
+one bucket and is counted once in each applicable bucket. The report also
+contains the sorted distinctive-word review list plus the Aspell version,
+normalized dictionary digest, and candidate digest that produced it.
+
+No generated title vocabulary is checked into this code-only repository. The
+Scryfall snapshot, expanded dictionary result, vocabulary, and reports stay in
+the gitignored `.cache/` tree. If Aspell or its `en_US` dictionary is absent,
+the scan fails loudly instead of silently reverting to a stem dictionary or an
+incomplete word list. Internal apostrophes are retained, while synthetic forms
+such as `Fixture's`, `Fixture’s`, and `Fixtures'` normalize to their grammatical
+base forms without using character-set stripping.
+
 The old README recorded a 23-hit figure without a runnable scanner in this
 repository and without the input snapshot and exact command needed to reproduce
 it, so that figure has been removed. Publish future counts only with the exact

@@ -11,6 +11,7 @@
 //! reqwest = { version = "0.12.28", default-features = false, features = ["blocking", "json", "rustls-tls"] }
 //! serde = { version = "1.0.219", features = ["derive"] }
 //! serde_json = "1.0.143"
+//! sha2 = "0.10.9"
 //! uuid = { version = "1.18.0", features = ["serde"] }
 //! ```
 
@@ -25,6 +26,8 @@ use std::process::Command;
 
 #[path = "lib/scryfall_bulk.rs"]
 mod scryfall_bulk;
+#[path = "lib/title_vocabulary.rs"]
+mod title_vocabulary;
 
 const MAX_REPORTED_HITS: usize = 20_000;
 
@@ -65,6 +68,11 @@ struct Args {
     #[arg(long)]
     refresh: bool,
 
+    /// Aspell executable used to expand the standard en_US dictionary. The
+    /// normalized version and content digest are recorded in the report.
+    #[arg(long, default_value = "aspell")]
+    aspell: String,
+
     /// Treat submodule entries as opaque gitlinks instead of traversing their
     /// independently versioned repositories.
     #[arg(long)]
@@ -83,8 +91,9 @@ enum ScanTarget {
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize)]
 #[serde(rename_all = "snake_case")]
 enum PatternKind {
-    CardTitle,
-    OracleText,
+    FullTitle,
+    DistinctiveTitleWord,
+    FullOracleText,
 }
 
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd, Serialize)]
@@ -101,13 +110,17 @@ struct PatternEntry {
 
 #[derive(Debug, Serialize)]
 struct ScanReport {
+    schema_version: u32,
     target: ScanTarget,
     submodules_included: bool,
     policy_input_paths_skipped: usize,
     patterns_from_scryfall: usize,
+    patterns_by_kind: BTreeMap<PatternKind, usize>,
     global_allowlisted_patterns: usize,
     local_exception_patterns: usize,
     active_patterns: usize,
+    active_patterns_by_kind: BTreeMap<PatternKind, usize>,
+    distinctive_vocabulary: DistinctiveVocabularyReport,
     tracked_files_considered: usize,
     text_files_scanned: usize,
     binary_files_skipped: usize,
@@ -115,8 +128,31 @@ struct ScanReport {
     hit_pairs: usize,
     omitted_hit_pairs: usize,
     hit_pairs_by_path_group: BTreeMap<String, usize>,
+    hit_pairs_by_pattern_kind: BTreeMap<PatternKind, usize>,
     pattern_hit_counts: Vec<PatternHitCount>,
     hits: Vec<Hit>,
+}
+
+#[derive(Debug, Serialize)]
+struct DistinctiveVocabularyReport {
+    scryfall_cache_path: String,
+    scryfall_cache_sha256: String,
+    dictionary_command: String,
+    dictionary_version: String,
+    normalized_dictionary_words: usize,
+    normalized_dictionary_sha256: String,
+    normalized_catalog_title_words: usize,
+    ordinary_dictionary_words: usize,
+    reviewed_allowlisted_words: usize,
+    distinctive_candidate_words: usize,
+    distinctive_candidate_sha256: String,
+    distinctive_candidates: Vec<String>,
+}
+
+#[derive(Debug)]
+struct PatternBuild {
+    patterns: BTreeMap<String, PatternEntry>,
+    title_word_sources: BTreeMap<String, BTreeSet<Option<String>>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -142,7 +178,7 @@ fn main() -> Result<()> {
         bail!("--local-exceptions is only valid with --target deepscry");
     }
     scryfall_bulk::ensure_cache(&args.cache, args.refresh)?;
-    let all_patterns = build_patterns(&args.cache)?;
+    let scryfall_cache_sha256 = title_vocabulary::file_sha256(&args.cache)?;
     let allowlist = load_exceptions(&args.allowlist, "global allowlist")?;
     let local_exceptions = args
         .local_exceptions
@@ -150,6 +186,28 @@ fn main() -> Result<()> {
         .map(|path| load_exceptions(path, "DeepScry local exceptions"))
         .transpose()?
         .unwrap_or_default();
+    let mut pattern_build = build_patterns(&args.cache)?;
+    let dictionary = title_vocabulary::expanded_aspell_dictionary(&args.aspell)?;
+    let vocabulary = title_vocabulary::derive_distinctive_vocabulary(
+        &pattern_build.title_word_sources,
+        &dictionary.words,
+        &allowlist,
+    );
+    for word in &vocabulary.distinctive_words {
+        let sources = pattern_build
+            .title_word_sources
+            .get(word)
+            .context("distinctive title word lost its source identities")?;
+        for oracle_id in sources {
+            insert_pattern(
+                &mut pattern_build.patterns,
+                word,
+                PatternKind::DistinctiveTitleWord,
+                oracle_id.clone(),
+            );
+        }
+    }
+    let all_patterns = pattern_build.patterns;
     let active_patterns = active_patterns(&all_patterns, &allowlist, &local_exceptions)?;
     if active_patterns.is_empty() {
         bail!("all Scryfall patterns were allowlisted; refusing a vacuous scan");
@@ -182,13 +240,30 @@ fn main() -> Result<()> {
     let policy_input_paths_skipped = tracked_files.iter().filter(|path| policy_paths.contains(*path)).count();
     tracked_files.retain(|path| !policy_paths.contains(path));
     let mut report = ScanReport {
+        schema_version: 2,
         target: args.target,
         submodules_included: !args.exclude_submodules,
         policy_input_paths_skipped,
         patterns_from_scryfall: all_patterns.len(),
+        patterns_by_kind: pattern_counts_by_kind(all_patterns.values()),
         global_allowlisted_patterns: allowlist.len(),
         local_exception_patterns: local_exceptions.len(),
         active_patterns: active_patterns.len(),
+        active_patterns_by_kind: pattern_counts_by_kind(active_patterns.iter()),
+        distinctive_vocabulary: DistinctiveVocabularyReport {
+            scryfall_cache_path: args.cache.display().to_string(),
+            scryfall_cache_sha256,
+            dictionary_command: format!("{} --lang=en_US dump master", args.aspell),
+            dictionary_version: dictionary.version,
+            normalized_dictionary_words: dictionary.words.len(),
+            normalized_dictionary_sha256: dictionary.sha256,
+            normalized_catalog_title_words: vocabulary.catalog_words.len(),
+            ordinary_dictionary_words: vocabulary.ordinary_words.len(),
+            reviewed_allowlisted_words: vocabulary.allowlisted_words.len(),
+            distinctive_candidate_words: vocabulary.distinctive_words.len(),
+            distinctive_candidate_sha256: vocabulary.sha256,
+            distinctive_candidates: vocabulary.distinctive_words.into_iter().collect(),
+        },
         tracked_files_considered: tracked_files.len(),
         text_files_scanned: 0,
         binary_files_skipped: 0,
@@ -196,6 +271,7 @@ fn main() -> Result<()> {
         hit_pairs: 0,
         omitted_hit_pairs: 0,
         hit_pairs_by_path_group: BTreeMap::new(),
+        hit_pairs_by_pattern_kind: zero_counts_by_kind(),
         pattern_hit_counts: Vec::new(),
         hits: Vec::new(),
     };
@@ -223,6 +299,14 @@ fn main() -> Result<()> {
             .or_default() += matched_pattern_ids.len();
         for pattern_id in matched_pattern_ids {
             pattern_hit_counts[pattern_id] += 1;
+            let kinds: BTreeSet<PatternKind> = active_patterns[pattern_id]
+                .sources
+                .iter()
+                .map(|source| source.kind.clone())
+                .collect();
+            for kind in kinds {
+                *report.hit_pairs_by_pattern_kind.entry(kind).or_default() += 1;
+            }
             if report.hits.len() >= MAX_REPORTED_HITS {
                 report.omitted_hit_pairs += 1;
                 continue;
@@ -289,6 +373,25 @@ fn path_group(relative_path: &str) -> String {
         }
     }
     first.to_owned()
+}
+
+fn pattern_counts_by_kind<'a>(entries: impl Iterator<Item = &'a PatternEntry>) -> BTreeMap<PatternKind, usize> {
+    let mut counts = zero_counts_by_kind();
+    for entry in entries {
+        let kinds: BTreeSet<PatternKind> = entry.sources.iter().map(|source| source.kind.clone()).collect();
+        for kind in kinds {
+            *counts.entry(kind).or_default() += 1;
+        }
+    }
+    counts
+}
+
+fn zero_counts_by_kind() -> BTreeMap<PatternKind, usize> {
+    BTreeMap::from([
+        (PatternKind::FullTitle, 0),
+        (PatternKind::DistinctiveTitleWord, 0),
+        (PatternKind::FullOracleText, 0),
+    ])
 }
 
 fn matched_patterns_in_file(relative_path: &str, text: &str, matcher: &aho_corasick::AhoCorasick) -> BTreeSet<usize> {
@@ -377,31 +480,57 @@ fn is_nonexpressive_card_record(relative_path: &str, line: &str) -> bool {
     )
 }
 
-fn build_patterns(cache: &Path) -> Result<BTreeMap<String, PatternEntry>> {
+fn build_patterns(cache: &Path) -> Result<PatternBuild> {
     let mut patterns = BTreeMap::new();
+    let mut title_word_sources: BTreeMap<String, BTreeSet<Option<String>>> = BTreeMap::new();
     scryfall_bulk::for_each_card(cache, |card| {
         if card.lang != "en" {
             return;
         }
         let oracle_id = card.oracle_id.map(|id| id.hyphenated().to_string());
-        insert_pattern(&mut patterns, &card.name, PatternKind::CardTitle, oracle_id.clone());
+        insert_title(&mut patterns, &mut title_word_sources, &card.name, oracle_id.clone());
         if let Some(printed_name) = card.printed_name.as_deref() {
-            insert_pattern(&mut patterns, printed_name, PatternKind::CardTitle, oracle_id.clone());
+            insert_title(&mut patterns, &mut title_word_sources, printed_name, oracle_id.clone());
         }
         if let Some(oracle_text) = card.oracle_text.as_deref() {
-            insert_pattern(&mut patterns, oracle_text, PatternKind::OracleText, oracle_id.clone());
+            insert_pattern(
+                &mut patterns,
+                oracle_text,
+                PatternKind::FullOracleText,
+                oracle_id.clone(),
+            );
         }
         for face in card.card_faces {
-            insert_pattern(&mut patterns, &face.name, PatternKind::CardTitle, oracle_id.clone());
+            insert_title(&mut patterns, &mut title_word_sources, &face.name, oracle_id.clone());
             if let Some(printed_name) = face.printed_name.as_deref() {
-                insert_pattern(&mut patterns, printed_name, PatternKind::CardTitle, oracle_id.clone());
+                insert_title(&mut patterns, &mut title_word_sources, printed_name, oracle_id.clone());
             }
             if let Some(oracle_text) = face.oracle_text.as_deref() {
-                insert_pattern(&mut patterns, oracle_text, PatternKind::OracleText, oracle_id.clone());
+                insert_pattern(
+                    &mut patterns,
+                    oracle_text,
+                    PatternKind::FullOracleText,
+                    oracle_id.clone(),
+                );
             }
         }
     })?;
-    Ok(patterns)
+    Ok(PatternBuild {
+        patterns,
+        title_word_sources,
+    })
+}
+
+fn insert_title(
+    patterns: &mut BTreeMap<String, PatternEntry>,
+    title_word_sources: &mut BTreeMap<String, BTreeSet<Option<String>>>,
+    original: &str,
+    oracle_id: Option<String>,
+) {
+    insert_pattern(patterns, original, PatternKind::FullTitle, oracle_id.clone());
+    for word in title_vocabulary::normalized_title_words(original) {
+        title_word_sources.entry(word).or_default().insert(oracle_id.clone());
+    }
 }
 
 fn insert_pattern(
@@ -416,8 +545,9 @@ fn insert_pattern(
     // would make the allowlist inert and give a different answer from the
     // DeepScry scan.
     let is_actionable = match kind {
-        PatternKind::CardTitle => normalized.len() >= 4,
-        PatternKind::OracleText => normalized.split_whitespace().count() >= 4 && normalized.len() >= 20,
+        PatternKind::FullTitle => normalized.len() >= 4,
+        PatternKind::DistinctiveTitleWord => !normalized.is_empty(),
+        PatternKind::FullOracleText => normalized.split_whitespace().count() >= 4 && normalized.len() >= 20,
     };
     if !is_actionable {
         return;
@@ -628,7 +758,7 @@ mod tests {
     #[test]
     fn single_word_titles_are_selected_then_global_allowlist_applies() {
         let mut patterns = BTreeMap::new();
-        insert_pattern(&mut patterns, "Fixtureword", PatternKind::CardTitle, None);
+        insert_pattern(&mut patterns, "Fixtureword", PatternKind::FullTitle, None);
         assert!(
             patterns.contains_key("fixtureword"),
             "single-word titles must reach policy review"
@@ -644,9 +774,40 @@ mod tests {
     }
 
     #[test]
+    fn short_distinctive_words_are_not_hidden_by_the_full_title_floor() {
+        let mut patterns = BTreeMap::new();
+        insert_pattern(&mut patterns, "Qzx", PatternKind::DistinctiveTitleWord, None);
+        assert!(
+            patterns.contains_key("qzx"),
+            "the dictionary-derived bucket must include short proper names"
+        );
+    }
+
+    #[test]
+    fn report_counts_a_shared_pattern_in_each_semantic_bucket() {
+        let mut patterns = BTreeMap::new();
+        insert_pattern(&mut patterns, "Fixtureword", PatternKind::FullTitle, None);
+        insert_pattern(&mut patterns, "Fixtureword", PatternKind::DistinctiveTitleWord, None);
+        insert_pattern(
+            &mut patterns,
+            "A sufficiently long synthetic Oracle body.",
+            PatternKind::FullOracleText,
+            None,
+        );
+        assert_eq!(
+            pattern_counts_by_kind(patterns.values()),
+            BTreeMap::from([
+                (PatternKind::FullTitle, 1),
+                (PatternKind::DistinctiveTitleWord, 1),
+                (PatternKind::FullOracleText, 1),
+            ])
+        );
+    }
+
+    #[test]
     fn deepscry_local_exception_is_separate_and_cannot_shadow_global_policy() {
         let mut patterns = BTreeMap::new();
-        insert_pattern(&mut patterns, "Fixtureword", PatternKind::CardTitle, None);
+        insert_pattern(&mut patterns, "Fixtureword", PatternKind::FullTitle, None);
         let local = BTreeMap::from([(
             "fixtureword".to_owned(),
             "A synthetic repository-specific false positive for this test.".to_owned(),
