@@ -596,24 +596,3 @@ vanishing	A generic game-mechanics keyword, and an ordinary English participle.
 vengeance	An ordinary English noun that appears in almost any English prose.
 vigor	An ordinary English noun that appears in almost any English prose.
 wise	An ordinary English adjective and suffix, as in file-wise and column-wise.
-
-# 2026-08-30 (basic land names): the five terrain words plus wastes. These are
-# ordinary English in any project — the same class as life, library, start,
-# exile and counters above — and nobody identifies a third party's
-# intellectual property from the word swamp. Allowlisting them rewrites no
-# text anywhere; it only stops the scanner reading a generic English word as a
-# card reference, which is the right outcome given that a deck fixture reading
-# p0library=Island;Island;Island genuinely does mean three copies of that card
-# and must not be rewritten.
-#
-# Taken as a DeepScry coordinator decision under a standing directive to drive
-# the IP-scan reduction to completion while the project owner was unavailable.
-# It is worth about 13,723 of DeepScry's hits and is reversible by deleting
-# these six lines.
-
-forest	An ordinary English noun for a wooded area. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
-plains	An ordinary English plural noun for flat open country. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
-island	An ordinary English noun for land surrounded by water. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
-mountain	An ordinary English noun for a large natural elevation of ground. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
-swamp	An ordinary English noun for wetland, and a common verb meaning to overwhelm. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
-wastes	An ordinary English verb meaning to squander, used throughout DeepScry's engineering prose, and a plural noun for barren land. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
