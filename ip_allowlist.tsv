@@ -258,3 +258,341 @@ warning	A standard software diagnostic noun.
 what	A common English interrogative pronoun.
 when	A common English temporal conjunction.
 where	A common English locative conjunction.
+
+# 2026-08-30 (DeepScry IP-scan reduction): single-word card titles that are
+# ordinary English words or generic card-game vocabulary. Each was reviewed
+# against sample lines from the DeepScry repository, where its dominant use is
+# prose, a code identifier, or a creature type rather than a card reference.
+# Basic land names are deliberately NOT included: that is a separate decision.
+# Multi-word card titles containing these words remain matched on their own.
+
+aggression	An ordinary English noun and the name of this project's heuristic aggression parameter.
+alive	An ordinary English adjective used for both processes and game objects.
+allies	An ordinary English plural noun and a generic creature type.
+allocator	A standard programming term for a memory allocator.
+ally	An ordinary English noun and a generic creature type.
+angel	A generic creature type.
+archon	A generic creature type.
+arena	An ordinary English noun and a common name for an index-based allocation region.
+assassin	A generic creature type and an ordinary English noun.
+attacking	An ordinary English participle and a generic combat-state term.
+authority	An ordinary English noun used for decision authority and source of truth.
+avatar	An ordinary English noun for a user or player representation, and a generic creature type.
+balance	An ordinary English noun and verb, and a standard load-balancing term. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
+beast	A generic creature type.
+bind	An ordinary English verb and a core programming term for binding names and keys.
+bird	A generic creature type and an ordinary English animal name.
+blood	An ordinary English noun and a generic token and cost term.
+boar	A generic creature type and an ordinary English animal name.
+breaking	An ordinary English participle used for breaking changes.
+buff	An ordinary English noun and verb, and a generic term for a stat increase.
+burn	An ordinary English verb and a generic deck-archetype word.
+cancel	An ordinary English verb and a standard job and workflow operation. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
+cease	An ordinary English verb that appears in almost any English prose.
+centaur	A generic creature type.
+channel	An ordinary English noun for a communication channel; rewriting it already corrupted prose here. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
+chaos	An ordinary English noun that appears in almost any English prose.
+charge	An ordinary English noun and verb, and the generic name of a counter kind.
+chromium	The name of the open-source browser engine used by this project's tests.
+citizen	An ordinary English noun and a generic creature type.
+cleric	A generic creature type.
+clue	An ordinary English noun and a generic token type.
+colossus	A generic creature descriptor and an ordinary English noun for something huge.
+companion	An ordinary English noun for an accompanying thing, and a generic game-mechanics keyword.
+consider	An ordinary English verb that appears in almost any English prose.
+construct	An ordinary English noun for a language construct, and a generic creature type.
+conversion	An ordinary English noun and a standard type-conversion term.
+corrupt	An ordinary English adjective and verb used for corrupted data.
+corruption	An ordinary English noun used for data corruption.
+counters	An ordinary English plural noun and the generic name for game-state counters.
+counterspell	A generic game-mechanics term and a Rust enum variant name in this engine. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
+crab	A generic creature type and an ordinary English animal name.
+crash	An ordinary English noun and verb, and a universal software failure mode.
+cycling	An ordinary English participle for repeating, and a generic game-mechanics keyword.
+dangerous	An ordinary English adjective that appears in almost any English prose.
+death	An ordinary English noun and a generic game-event term.
+decklist	A generic card-game term for the list of cards in a deck.
+defeat	An ordinary English noun and verb, and a generic game-result term.
+delay	An ordinary English noun and verb used for timing throughout.
+delete	An ordinary English verb and a universal file and record operation.
+deliver	An ordinary English verb used throughout delivery and release prose.
+demon	A generic creature type.
+deploy	An ordinary English verb and a universal software-release term.
+despair	An ordinary English noun that appears in almost any English prose.
+dinosaur	A generic creature type and an ordinary English animal name.
+dirty	An ordinary English adjective and the standard term for an unsaved working tree.
+discovery	An ordinary English noun and a standard term for automatic file or test discovery.
+dispatch	An ordinary English noun and verb, and a core programming term for call routing.
+djinn	A generic creature type.
+doctor	An ordinary English noun and a generic creature type.
+dominate	An ordinary English verb that appears in almost any English prose.
+done	An ordinary English adjective used in checklists and status output.
+dragon	A generic creature type.
+dragons	A generic creature type in plural form.
+driven	An ordinary English participle used in compounds such as data-driven.
+dust	An ordinary English noun that appears in almost any English prose.
+dwarf	A generic creature type.
+earth	An ordinary English noun and a generic elemental descriptor.
+efreet	A generic creature type.
+el	A short identifier fragment for element, produced by normalizing names such as c_el.
+elemental	A generic creature type and an ordinary English adjective.
+elephant	A generic creature type and an ordinary English animal name.
+eliminate	An ordinary English verb used throughout refactoring prose.
+elves	A generic creature type in plural form.
+enchanted	An ordinary English participle and a generic game-state term.
+endurance	An ordinary English noun used for endurance and soak testing.
+endure	An ordinary English verb that appears in almost any English prose.
+entering	An ordinary English participle and a generic zone-change term.
+equipped	An ordinary English participle and a generic equipment-state term.
+execute	An ordinary English verb used throughout engine and tooling prose.
+exile	An ordinary English noun and the generic name of a card-game zone.
+experimental	An ordinary English adjective used for experimental features and flags.
+explore	An ordinary English verb used throughout investigation prose. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
+faerie	A generic creature type.
+fear	An ordinary English noun that appears in almost any English prose.
+feed	An ordinary English noun and verb used for data feeds.
+feedback	An ordinary English noun used for review feedback.
+fell	An ordinary English past tense of fall, used in prose such as fell through.
+fight	An ordinary English verb and a generic combat term.
+finish	An ordinary English verb used throughout process prose.
+fire	An ordinary English noun and verb, used for triggers that fire.
+fish	A generic creature type and an ordinary English animal name.
+flash	An ordinary English noun and a generic game-mechanics keyword.
+flight	An ordinary English noun; in this repository it is almost always the phrase in flight.
+flux	An ordinary English noun for continuous change.
+flyer	A generic creature descriptor for a creature with flying.
+food	An ordinary English noun and a generic token type.
+fork	An ordinary English noun and verb, and a standard process and repository operation. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
+formation	An ordinary English noun that appears in almost any English prose.
+giant	A generic creature type and an ordinary English adjective.
+glory	An ordinary English noun that appears in almost any English prose.
+goblin	A generic creature type.
+goblins	A generic creature type in plural form.
+golem	A generic creature type.
+gone	An ordinary English participle that appears in almost any English prose.
+granted	An ordinary English participle used for permissions and for granted abilities.
+handoff	A standard English compound for transferring work between agents or processes.
+heal	An ordinary English verb and a generic life-restoration term.
+hero	An ordinary English noun that appears in almost any English prose.
+honor	An ordinary English verb meaning to respect a constraint.
+honour	The British spelling of the ordinary English verb honor.
+horror	A generic creature type and an ordinary English noun.
+horse	A generic creature type and an ordinary English animal name.
+hydra	A generic creature type.
+insect	A generic creature type and an ordinary English animal name.
+integrity	An ordinary English noun used for data-integrity checks.
+invent	An ordinary English verb that appears in almost any English prose.
+ish	An English suffix used in prose such as safe-ish and Copy-ish.
+journey	An ordinary English noun that appears in almost any English prose.
+jump	An ordinary English verb and a standard control-flow term.
+junk	An ordinary English noun for discardable data.
+kitchen	An ordinary English noun; in this repository it is the phrase kitchen sink.
+knight	A generic creature type.
+lander	An ordinary English agent noun; in this repository it names the agent that lands pull requests.
+lands	An ordinary English verb form (a branch lands) and the generic plural of a card category.
+launch	An ordinary English verb used for starting processes and releases.
+lead	An ordinary English noun and verb, and this project's name for the coordinating team.
+legion	A generic creature type and an ordinary English noun for a large group.
+lessons	An ordinary English plural noun used in retrospectives.
+lethal	An ordinary English adjective and a generic combat-damage term.
+library	An ordinary English noun for a code library and the standard name of a card-game zone.
+life	An ordinary English noun and the universal game-state counter every rules engine prints.
+lifelink	A generic game-mechanics keyword that any rules engine must name.
+lightning	An ordinary English noun; the specific card names that contain it remain separately matched.
+lizard	A generic creature type and an ordinary English animal name.
+merfolk	A generic creature type.
+midrange	A generic deck-archetype term in any card game.
+mind	An ordinary English noun that appears in almost any English prose.
+monk	A generic creature type.
+monkey	A generic creature type and an ordinary English animal name.
+monster	A generic creature type and an ordinary English noun.
+mouse	A generic creature type, an ordinary English animal name, and a pointing device.
+mutant	A generic creature type and an ordinary English noun.
+nobody	An ordinary English pronoun that appears in almost any English prose.
+octopus	A generic creature type and an ordinary English animal name.
+ogre	A generic creature type.
+opportunity	An ordinary English noun that appears in almost any English prose.
+otter	A generic creature type and an ordinary English animal name.
+pain	An ordinary English noun and a generic land-cycle descriptor.
+peek	An ordinary English verb and a standard stack and iterator operation.
+pegasus	A generic creature type.
+persist	An ordinary English verb for saving state, and a generic game-mechanics keyword.
+pest	A generic creature type and an ordinary English noun.
+pilot	An ordinary English noun and verb used for pilot runs, and a generic creature type.
+planeswalker	A generic card type that any rules engine must name.
+plant	An ordinary English noun and verb, and a generic creature type.
+plot	An ordinary English noun and verb, and the standard term for a generated chart.
+precise	An ordinary English adjective that appears in almost any English prose.
+prepare	An ordinary English verb used throughout process prose.
+probe	An ordinary English noun and verb used for health checks and diagnostics.
+proposal	An ordinary English noun used for design proposals throughout the issue tracker.
+protect	An ordinary English verb used for branch protection and access control.
+rats	A generic creature type in plural form and an ordinary English animal name.
+rebuild	An ordinary English verb and a universal build-system term.
+reconstruction	An ordinary English noun used for rebuilding state from a log.
+redirect	An ordinary English verb and a standard input/output and HTTP term.
+remedy	An ordinary English noun for a fix.
+research	An ordinary English noun used throughout investigation prose.
+reset	An ordinary English verb and a universal software state operation. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
+restore	An ordinary English verb used for state and backup operations.
+rewind	An ordinary English verb and this engine's name for undoing recorded state.
+rhino	A generic creature type and an ordinary English animal name.
+rise	An ordinary English noun and verb that appears in almost any English prose.
+road	An ordinary English noun that appears in almost any English prose.
+robot	A generic creature type and an ordinary English noun.
+rock	An ordinary English noun and a generic deck-archetype word.
+rogue	An ordinary English adjective and noun, and a generic creature type.
+royal	An ordinary English adjective that appears in almost any English prose.
+sacrifice	An ordinary English verb and a generic game-mechanics term. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
+said	An ordinary English past tense of say that appears in almost any English prose.
+salvage	An ordinary English verb used for recovering work and data.
+seek	An ordinary English verb and the standard name of a file-position operation.
+seeker	An ordinary English agent noun for something that seeks.
+sentinel	An ordinary English noun and a standard programming term for a marker value.
+serve	An ordinary English verb and a standard web-server term.
+shapeshifter	A generic creature type and an ordinary English compound noun.
+shock	An ordinary English noun and verb for a sudden impact. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
+shrink	An ordinary English verb used for reducing sizes and buffers.
+silence	An ordinary English noun and verb used for silencing warnings and output.
+simple	An ordinary English adjective used throughout prose and fixture names.
+skeleton	An ordinary English noun used for a skeleton implementation, and a generic creature type.
+sleep	An ordinary English verb and the standard name of a delay call.
+sliver	A generic creature type and an ordinary English noun for a thin piece.
+slug	A generic creature type and an ordinary English animal name.
+smoke	An ordinary English noun; in this repository it is the phrase smoke test.
+sorcerer	A generic creature type.
+spawn	An ordinary English verb and the standard term for creating a child process.
+sphinx	A generic creature type.
+spider	An ordinary English noun and a generic creature type.
+spirit	A generic creature type and an ordinary English noun.
+stand	An ordinary English verb that appears in almost any English prose.
+start	An ordinary English verb used throughout process, test, and lifecycle prose.
+statue	An ordinary English noun that appears in almost any English prose.
+study	An ordinary English noun and verb that appears in almost any English prose.
+stun	An ordinary English verb and a generic counter and status term.
+suppress	An ordinary English verb used for suppressing warnings and output.
+tear	An ordinary English noun and verb that appears in almost any English prose.
+terminate	An ordinary English verb and the standard term for ending a process.
+thopter	A generic creature type.
+threat	An ordinary English noun used in security and gameplay prose.
+tiny	An ordinary English adjective that appears in almost any English prose.
+toxic	An ordinary English adjective and a generic game-mechanics term.
+tracker	An ordinary English noun for anything that tracks state.
+treasure	An ordinary English noun and a generic token type.
+troll	A generic creature type.
+tutorial	An ordinary English noun used for documentation and example content.
+undo	An ordinary English verb and the standard name of a state-restoration log.
+untap	A generic game-mechanics keyword that any rules engine must name.
+vampire	A generic creature type.
+vehicle	An ordinary English noun and a generic card type.
+vehicles	A generic card type in plural form and an ordinary English noun.
+victory	An ordinary English noun and a generic game-result term.
+void	An ordinary English noun and the standard name of the empty type in C-family languages.
+wall	A generic creature type and an ordinary English noun used for wall-clock time.
+walls	A generic creature type in plural form and an ordinary English noun.
+warrior	An ordinary English noun and a generic creature type.
+warriors	A generic creature type in plural form.
+watchdog	An ordinary English noun and the standard term for a supervising timer or process.
+weird	An ordinary English adjective that appears in almost any English prose.
+well	An ordinary English adverb that appears in almost any English prose.
+wild	An ordinary English adjective and the standard term for a wildcard pattern.
+wizard	A generic creature type.
+wolf	A generic creature type and an ordinary English animal name.
+zombie	A generic creature type.
+zombies	A generic creature type in plural form.
+
+# 2026-08-30 (second tranche): tail tokens whose files outside card-data
+# locations outnumber those inside by at least three to one, hand-filtered to
+# drop anything that reads as a card name in this repository.
+
+absorb	An ordinary English verb that appears in almost any English prose. A card bears exactly this name; this entry says the word is too generic to adjudicate, not that the card is unprotected.
+afterlife	An ordinary English noun that appears in almost any English prose.
+armed	An ordinary English participle meaning made ready, used for armed CI checks.
+awakening	An ordinary English noun that appears in almost any English prose.
+believe	An ordinary English verb that appears in almost any English prose.
+belonging	An ordinary English participle meaning owned by or part of.
+blessing	An ordinary English noun; in this repository it is blessing golden test output.
+brand	An ordinary English noun for branding and a common verb.
+browse	An ordinary English verb and a standard user-interface operation.
+burning	An ordinary English participle that appears in almost any English prose.
+chance	An ordinary English noun used for probability throughout.
+choke	An ordinary English verb used for choke points and contention.
+connive	A generic game-mechanics keyword, and an ordinary English verb.
+constellation	A generic game-mechanics keyword, and an ordinary English noun.
+cursed	An ordinary English adjective that appears in almost any English prose.
+decomposition	An ordinary English noun and a standard term for breaking a problem apart.
+delirium	A generic game-mechanics keyword.
+denied	An ordinary English participle used for denied permissions and requests.
+determined	An ordinary English participle meaning decided or computed.
+disappear	An ordinary English verb that appears in almost any English prose.
+dread	An ordinary English noun and verb that appears in almost any English prose.
+dredge	A generic game-mechanics keyword, and an ordinary English verb.
+emptiness	An ordinary English noun for the state of being empty.
+erase	An ordinary English verb and a standard container operation.
+exhaustion	An ordinary English noun used for exhausted quota and resources.
+experience	An ordinary English noun used for user experience and developer experience.
+exploration	An ordinary English noun and the standard term for search exploration.
+fabricate	A generic game-mechanics keyword, and an ordinary English verb.
+finality	An ordinary English noun for the state of being final.
+flashback	A generic game-mechanics keyword that any rules engine must name.
+flicker	An ordinary English verb for a brief flash, and a generic blink-effect term.
+flood	An ordinary English noun and verb used for flooding a log or a queue.
+flourish	An ordinary English noun and verb that appears in almost any English prose.
+foretell	A generic game-mechanics keyword.
+forget	An ordinary English verb that appears in almost any English prose.
+framed	An ordinary English participle used for framing a question and for video frames.
+fury	An ordinary English noun that appears in almost any English prose.
+gold	An ordinary English noun for the metal and the colour.
+incoming	An ordinary English adjective used for incoming requests and messages.
+indicate	An ordinary English verb that appears in almost any English prose.
+inheritance	An ordinary English noun and a standard object-oriented programming term.
+invert	An ordinary English verb and a standard logical and numeric operation.
+isolate	An ordinary English verb used throughout debugging prose.
+knowing	An ordinary English participle that appears in almost any English prose.
+landfall	A generic game-mechanics keyword, and an ordinary English noun.
+learning	An ordinary English noun and the standard term in machine learning.
+loathing	An ordinary English noun that appears in almost any English prose.
+melee	A generic game-mechanics keyword, and an ordinary English noun for close combat.
+minion	A generic creature type, and an ordinary English noun.
+mobilize	An ordinary English verb that appears in almost any English prose.
+morph	A generic game-mechanics keyword, and an ordinary English verb for transforming.
+nice	An ordinary English adjective and the Unix process-priority command.
+night	An ordinary English noun that appears in almost any English prose.
+omen	An ordinary English noun for a sign of what is coming.
+onward	An ordinary English adverb that appears in almost any English prose.
+overload	A generic game-mechanics keyword, and the standard term for function overloading.
+predict	An ordinary English verb and a standard modelling term.
+reality	An ordinary English noun that appears in almost any English prose.
+reanimate	An ordinary English verb and a generic graveyard-recursion term.
+reanimated	An ordinary English participle and a generic graveyard-recursion term.
+reap	An ordinary English verb and the standard term for reaping child processes.
+rebound	An ordinary English noun and verb for bouncing back.
+regress	An ordinary English verb and the root of regression testing.
+replicate	A generic game-mechanics keyword, and the standard term for copying data.
+reprieve	An ordinary English noun for a temporary delay.
+rescue	An ordinary English verb used for recovering work.
+resurrection	An ordinary English noun that appears in almost any English prose.
+retrieve	An ordinary English verb and a standard data-access operation.
+revenge	An ordinary English noun that appears in almost any English prose.
+revive	An ordinary English verb used for restarting a stalled process.
+riders	An ordinary English plural noun; in this repository it is free riders and rider commits.
+roots	An ordinary English plural noun used for filesystem and tree roots.
+rough	An ordinary English adjective used for rough estimates.
+satyr	A generic creature type.
+seismic	An ordinary English adjective for a large disruptive change.
+silhouette	An ordinary English noun used for rendering and image outlines.
+snow	A generic card supertype, and an ordinary English noun.
+stomp	An ordinary English verb; in this repository it is stomping on another agent's work.
+surprise	An ordinary English noun that appears in almost any English prose.
+survivor	An ordinary English noun that appears in almost any English prose.
+suspend	A generic game-mechanics keyword, and an ordinary English verb for pausing.
+threaten	An ordinary English verb that appears in almost any English prose.
+throttle	An ordinary English verb and the standard term for rate limiting.
+treasures	An ordinary English plural noun and a generic token type.
+truce	An ordinary English noun that appears in almost any English prose.
+unwind	An ordinary English verb and the standard term for stack unwinding.
+vampires	A generic creature type in plural form.
+vanishing	A generic game-mechanics keyword, and an ordinary English participle.
+vengeance	An ordinary English noun that appears in almost any English prose.
+vigor	An ordinary English noun that appears in almost any English prose.
+wise	An ordinary English adjective and suffix, as in file-wise and column-wise.
