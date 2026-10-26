@@ -116,9 +116,9 @@ reviewed allowlist that goes with it:
 
 * `scripts/scan_scryfall_ip.rs` — the one scanner for card-compiler,
   DeepScry, and CardScriptsMirror.
-* `ip_allowlist.tsv` — the canonical reviewed allowlist of titles that must
-  NOT count as hits because they are ordinary English words or phrases. Each
-  entry has a plain-language reason.
+* `ip_allowlist.tsv` — the canonical reviewed policy. Global rows cover
+  ordinary language; optional component scopes cover mirror mechanic/API
+  vocabulary. Each entry has a plain-language reason.
 
 They live here, and not in `cardsfolder-mirror`, because the mirror is moving
 toward being purely a data repository: an up-to-date but anonymized copy of the
@@ -140,6 +140,23 @@ For DeepScry only, pass its checked-in local-exception file with
 DeepScry; it cannot redefine whether a title is ordinary English. An entry
 duplicated in the global allowlist is a loud error. Card-compiler and
 CardScriptsMirror intentionally have no local exception input.
+
+The master policy supports an optional third tab-separated column containing
+comma-separated mirror component scopes. A two-column row is a global ordinary
+language decision. A scoped row leaves the pattern active and applies only to
+`--target card-scripts-mirror` inside the specified executable record components.
+It never exempts DeepScry, prose files, or display parameter values. Each row
+records why its exact mechanic/API vocabulary is required. The report records
+the number of configured component rules and whether mirror scopes were applied.
+
+Scopes include `mirror/types`, `mirror/keyword/<opcode>`, `mirror/svar-label`,
+`mirror/svar-value/<identifier>`, `mirror/parameter/<key>`,
+`mirror/parameter-key`, and `mirror/record-key`. Keyword scopes name an exact opcode; sentence-shaped legacy opcodes use
+`sha256-<digest>` of that exact opcode. Flavor tails stay scanned. Display-capable parameter scopes
+are rejected. A sacrifice cost's optional display label stays scanned even when
+its type/filter operand has a scoped rule. Unknown scopes and duplicate rules
+fail closed. Existing global-policy consumers must select only two-column rows;
+scoped mechanics are not ordinary-language exemptions in another repository.
 
 ### Why the allowlist is not optional
 

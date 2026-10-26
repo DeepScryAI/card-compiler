@@ -28,6 +28,8 @@ use std::process::Command;
 mod scryfall_bulk;
 #[path = "lib/title_vocabulary.rs"]
 mod title_vocabulary;
+#[path = "lib/scoped_ip_policy.rs"]
+mod scoped_ip_policy;
 
 #[derive(Parser, Debug)]
 #[command(about = "Scan tracked repository text for normalized Scryfall titles and Oracle text")]
@@ -119,6 +121,8 @@ struct ScanReport {
     patterns_from_scryfall: usize,
     patterns_by_kind: BTreeMap<PatternKind, usize>,
     global_allowlisted_patterns: usize,
+    configured_mirror_scope_rules: usize,
+    mirror_scopes_applied: bool,
     local_exception_patterns: usize,
     active_patterns: usize,
     active_patterns_by_kind: BTreeMap<PatternKind, usize>,
@@ -181,7 +185,7 @@ fn main() -> Result<()> {
     }
     scryfall_bulk::ensure_cache(&args.cache, args.refresh)?;
     let scryfall_cache_sha256 = title_vocabulary::file_sha256(&args.cache)?;
-    let allowlist = load_exceptions(&args.allowlist, "global allowlist")?;
+    let (allowlist, scoped_rules) = scoped_ip_policy::load(&args.allowlist, "global allowlist")?;
     let local_exceptions = args
         .local_exceptions
         .as_deref()
@@ -253,6 +257,8 @@ fn main() -> Result<()> {
         patterns_from_scryfall: all_patterns.len(),
         patterns_by_kind: pattern_counts_by_kind(all_patterns.values()),
         global_allowlisted_patterns: allowlist.len(),
+        configured_mirror_scope_rules: scoped_rules.len(),
+        mirror_scopes_applied: args.target == ScanTarget::CardScriptsMirror,
         local_exception_patterns: local_exceptions.len(),
         active_patterns: active_patterns.len(),
         active_patterns_by_kind: pattern_counts_by_kind(active_patterns.iter()),
@@ -297,7 +303,8 @@ fn main() -> Result<()> {
         let text = std::str::from_utf8(&bytes)
             .with_context(|| format!("tracked text file is not UTF-8: {}", path.display()))?;
         report.text_files_scanned += 1;
-        let matched_pattern_ids = matched_patterns_in_file(&relative_path, text, &matcher);
+        let matched_pattern_ids = matched_patterns_with_policy(&relative_path, text, &matcher,
+            (args.target == ScanTarget::CardScriptsMirror).then_some(&scoped_rules));
         report.hit_pairs += matched_pattern_ids.len();
         *report
             .hit_pairs_by_path_group
@@ -400,7 +407,12 @@ fn zero_counts_by_kind() -> BTreeMap<PatternKind, usize> {
     ])
 }
 
+#[cfg(test)]
 fn matched_patterns_in_file(relative_path: &str, text: &str, matcher: &aho_corasick::AhoCorasick) -> BTreeSet<usize> {
+    matched_patterns_with_policy(relative_path, text, matcher, None)
+}
+
+fn matched_patterns_with_policy(relative_path: &str, text: &str, matcher: &aho_corasick::AhoCorasick, scoped_rules: Option<&scoped_ip_policy::ScopedRules>) -> BTreeSet<usize> {
     let is_corpus_record = is_corpus_card_record(relative_path);
     text.lines()
         .filter(|line| !is_nonexpressive_card_record(relative_path, line))
@@ -410,6 +422,7 @@ fn matched_patterns_in_file(relative_path: &str, text: &str, matcher: &aho_coras
             } else {
                 line.to_owned()
             };
+            let scanned = if let Some(rules) = scoped_rules { rules.mask_line(relative_path, &scanned) } else { scanned };
             let normalized = format!(" {} ", normalize_for_scan(&scanned));
             matcher
                 .find_overlapping_iter(&normalized)
@@ -586,31 +599,8 @@ fn normalize_for_scan(text: &str) -> String {
 }
 
 fn load_exceptions(path: &Path, label: &str) -> Result<BTreeMap<String, String>> {
-    let text = fs::read_to_string(path).with_context(|| format!("read {label} {}", path.display()))?;
-    let mut entries = BTreeMap::new();
-    for (index, line) in text.lines().enumerate() {
-        let line = line.trim();
-        if line.is_empty() || line.starts_with('#') {
-            continue;
-        }
-        let (pattern, reason) = line.split_once('\t').with_context(|| {
-            format!(
-                "{label} line {} must be '<normalized pattern><TAB><plain-language reason>'",
-                index + 1
-            )
-        })?;
-        let pattern = pattern.trim();
-        let reason = reason.trim();
-        if normalize_for_scan(pattern) != pattern {
-            bail!("{label} line {} is not normalized: {pattern:?}", index + 1);
-        }
-        if reason.len() < 12 {
-            bail!("{label} line {} has no meaningful justification", index + 1);
-        }
-        if entries.insert(pattern.to_owned(), reason.to_owned()).is_some() {
-            bail!("duplicate {label} pattern on line {}: {pattern:?}", index + 1);
-        }
-    }
+    let (entries, scoped) = scoped_ip_policy::load(path, label)?;
+    if !scoped.is_empty() { bail!("{label} must not contain mirror scopes; these belong in the compiler master policy"); }
     Ok(entries)
 }
 
@@ -727,6 +717,37 @@ mod tests {
     #[test]
     fn normalization_lowercases_and_turns_punctuation_into_boundaries() {
         assert_eq!(normalize_for_scan("First-strike!  CAT_name"), "first strike cat name");
+    }
+
+    #[test]
+    fn mirror_scopes_leave_titles_active_in_other_targets_and_prose() {
+        let policy = std::env::temp_dir().join(format!("mirror-scoped-candidate-test-{}.tsv", std::process::id()));
+        fs::write(&policy, "fixtureword\tA typed mirror selector, never a global exemption.\tmirror/parameter/ValidTgts,mirror/parameter/Cost,mirror/keyword/FixtureApi,mirror/keyword/Equip\n").unwrap();
+        let (global, scoped) = scoped_ip_policy::load(&policy, "test policy").unwrap();
+        fs::remove_file(&policy).unwrap();
+        let mut entries = BTreeMap::new();
+        insert_pattern(&mut entries, "fixtureword", PatternKind::FullTitle, None);
+        let active = active_patterns(&entries, &global, &BTreeMap::new()).unwrap();
+        assert_eq!(active.len(), 1, "a mirror rule must not remove the global candidate");
+        let matcher = AhoCorasickBuilder::new().kind(Some(AhoCorasickKind::ContiguousNFA)).build([" fixtureword "]).unwrap();
+        let path = "cards/00/00/00/00000001.txt";
+        let typed = "A:AB$ Pump | ValidTgts$ Fixtureword";
+        assert!(matched_patterns_with_policy(path, typed, &matcher, Some(&scoped)).is_empty());
+        assert!(matched_patterns_with_policy(path, "K:FixtureApi:Fixtureword", &matcher, Some(&scoped)).is_empty());
+        assert_eq!(matched_patterns_with_policy(path, "K:UnreviewedApi:Fixtureword", &matcher, Some(&scoped)).len(), 1);
+        // Every non-mirror target passes None, leaving identical text visible.
+        assert_eq!(matched_patterns_with_policy(path, typed, &matcher, None).len(), 1);
+        for prose in [
+            "A:AB$ Pump | ValidTgts$ Fixtureword | Text$ Fixtureword",
+            "K:Equip:2:Flavor$ Fixtureword",
+            "K:Equip:2:Flavor Fixtureword",
+            "K:Equip:2:creature named Fixtureword",
+            "A:AB$ Draw | Cost$ Sac<1/Fixtureword/creature named Fixtureword>",
+            "Name:Fixtureword",
+        ] {
+            assert_eq!(matched_patterns_with_policy(path, prose, &matcher, Some(&scoped)).len(), 1, "{prose}");
+        }
+        assert_eq!(matched_patterns_with_policy("README.md", typed, &matcher, Some(&scoped)).len(), 1);
     }
 
     #[test]
