@@ -228,14 +228,15 @@ fn main() -> Result<()> {
         .build(&wrapped_patterns)
         .context("compile normalized Scryfall pattern automaton")?;
 
+    let mut tracked_files = git_tracked_files(&args.root, !args.exclude_submodules)?;
     let policy_paths = policy_paths_under_root(
         &args.root,
         [&args.allowlist]
             .into_iter()
             .chain(args.local_exceptions.as_ref())
             .collect(),
+        &tracked_files,
     )?;
-    let mut tracked_files = git_tracked_files(&args.root, !args.exclude_submodules)?;
     if let Some(prefix) = args.path_prefix.as_deref() {
         tracked_files.retain(|path| path == prefix || path.starts_with(&format!("{prefix}/")));
     }
@@ -641,11 +642,12 @@ fn active_patterns(
 /// An allowlist or local-exception file necessarily spells the patterns it
 /// governs. Counting that audited policy input as a repository exposure would
 /// make a clean result impossible while hiding the scanner's real target.
-fn policy_paths_under_root(root: &Path, paths: Vec<&PathBuf>) -> Result<BTreeSet<String>> {
+fn policy_paths_under_root(root: &Path, paths: Vec<&PathBuf>, tracked_files: &[String]) -> Result<BTreeSet<String>> {
     let canonical_root = root
         .canonicalize()
         .with_context(|| format!("canonicalize scan root {}", root.display()))?;
     let mut relative_paths = BTreeSet::new();
+    let mut canonical_policy_paths = BTreeSet::new();
     for path in paths {
         let canonical_path = path
             .canonicalize()
@@ -666,6 +668,19 @@ fn policy_paths_under_root(root: &Path, paths: Vec<&PathBuf>) -> Result<BTreeSet
         }
         if let Ok(relative) = canonical_path.strip_prefix(&canonical_root) {
             relative_paths.insert(relative.to_string_lossy().replace('\\', "/"));
+        }
+        canonical_policy_paths.insert(canonical_path);
+    }
+    // A tracked alias is still policy input when the caller names its master.
+    // Compare exact resolved targets; unrelated symlinks remain in scan scope.
+    for tracked in tracked_files {
+        let candidate = canonical_root.join(tracked);
+        if candidate.is_symlink()
+            && candidate
+                .canonicalize()
+                .is_ok_and(|target| canonical_policy_paths.contains(&target))
+        {
+            relative_paths.insert(tracked.to_owned());
         }
     }
     Ok(relative_paths)
@@ -850,7 +865,7 @@ mod tests {
         let outside = std::env::temp_dir().join(format!("cardskin-policy-outside-{}.tsv", std::process::id()));
         fs::write(&outside, "fixtureword\tA synthetic exception reason for this test.\n").unwrap();
 
-        let paths = policy_paths_under_root(&directory, vec![&inside, &outside]).unwrap();
+        let paths = policy_paths_under_root(&directory, vec![&inside, &outside], &[]).unwrap();
         assert_eq!(paths, BTreeSet::from(["nested/exceptions.tsv".to_owned()]));
 
         fs::remove_file(inside).unwrap();
@@ -868,11 +883,42 @@ mod tests {
         fs::write(&target, "fixtureword\tA synthetic exception reason for this test.\n").unwrap();
         symlink("shared.tsv", &alias).unwrap();
         assert_eq!(
-            policy_paths_under_root(&directory, vec![&alias]).unwrap(),
+            policy_paths_under_root(&directory, vec![&alias], &[]).unwrap(),
             BTreeSet::from(["shared.tsv".to_owned(), "alias.tsv".to_owned()])
         );
         fs::remove_file(alias).unwrap();
         fs::remove_file(target).unwrap();
+        fs::remove_dir(directory).unwrap();
+    }
+    #[cfg(unix)]
+    #[test]
+    fn tracked_alias_of_external_policy_is_skipped_when_only_master_is_configured() {
+        use std::os::unix::fs::symlink;
+        let directory = std::env::temp_dir().join(format!("cardskin-tracked-policy-alias-test-{}", std::process::id()));
+        let scan_root = directory.join("scan");
+        fs::create_dir_all(&scan_root).unwrap();
+        let policy = directory.join("policy.tsv");
+        let alias = scan_root.join("alias.tsv");
+        let other = scan_root.join("other.txt");
+        let unrelated_alias = scan_root.join("other-alias.txt");
+        fs::write(&policy, "fixtureword\tA synthetic exception reason for this test.\n").unwrap();
+        fs::write(&other, "fixture exposure stays in scope").unwrap();
+        symlink(&policy, &alias).unwrap();
+        symlink(&other, &unrelated_alias).unwrap();
+        let tracked = vec![
+            "alias.tsv".to_owned(),
+            "other.txt".to_owned(),
+            "other-alias.txt".to_owned(),
+        ];
+        assert_eq!(
+            policy_paths_under_root(&scan_root, vec![&policy], &tracked).unwrap(),
+            BTreeSet::from(["alias.tsv".to_owned()])
+        );
+        fs::remove_file(alias).unwrap();
+        fs::remove_file(unrelated_alias).unwrap();
+        fs::remove_file(other).unwrap();
+        fs::remove_file(policy).unwrap();
+        fs::remove_dir(scan_root).unwrap();
         fs::remove_dir(directory).unwrap();
     }
 }
