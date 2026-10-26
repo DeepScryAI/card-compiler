@@ -29,8 +29,6 @@ mod scryfall_bulk;
 #[path = "lib/title_vocabulary.rs"]
 mod title_vocabulary;
 
-const MAX_REPORTED_HITS: usize = 20_000;
-
 #[derive(Parser, Debug)]
 #[command(about = "Scan tracked repository text for normalized Scryfall titles and Oracle text")]
 struct Args {
@@ -63,6 +61,10 @@ struct Args {
     /// Machine-readable result; kept below the untracked cache by default.
     #[arg(long, default_value = ".cache/reports/ip-scan.json")]
     report: PathBuf,
+
+    /// Maximum detailed findings; aggregate counts always cover the full scan.
+    #[arg(long, default_value_t = 20_000)]
+    max_reported_hits: usize,
 
     /// Ignore a present cache and download the current Scryfall snapshot.
     #[arg(long)]
@@ -239,6 +241,9 @@ fn main() -> Result<()> {
     }
     let policy_input_paths_skipped = tracked_files.iter().filter(|path| policy_paths.contains(*path)).count();
     tracked_files.retain(|path| !policy_paths.contains(path));
+    if tracked_files.is_empty() {
+        bail!("selected scan scope contains no tracked files");
+    }
     let mut report = ScanReport {
         schema_version: 2,
         target: args.target,
@@ -307,7 +312,7 @@ fn main() -> Result<()> {
             for kind in kinds {
                 *report.hit_pairs_by_pattern_kind.entry(kind).or_default() += 1;
             }
-            if report.hits.len() >= MAX_REPORTED_HITS {
+            if report.hits.len() >= args.max_reported_hits {
                 report.omitted_hit_pairs += 1;
                 continue;
             }
@@ -645,6 +650,20 @@ fn policy_paths_under_root(root: &Path, paths: Vec<&PathBuf>) -> Result<BTreeSet
         let canonical_path = path
             .canonicalize()
             .with_context(|| format!("canonicalize policy input {}", path.display()))?;
+        // Preserve a tracked symlink's spelling as well as its resolved target.
+        // Otherwise a policy alias is scanned as if it were exposed prose.
+        let absolute_path = if path.is_absolute() {
+            path.to_path_buf()
+        } else {
+            std::env::current_dir()?.join(path)
+        };
+        let parent = absolute_path.parent().context("policy path has no parent")?;
+        let alias_path = parent
+            .canonicalize()?
+            .join(path.file_name().context("policy path has no filename")?);
+        if let Ok(relative) = alias_path.strip_prefix(&canonical_root) {
+            relative_paths.insert(relative.to_string_lossy().replace('\\', "/"));
+        }
         if let Ok(relative) = canonical_path.strip_prefix(&canonical_root) {
             relative_paths.insert(relative.to_string_lossy().replace('\\', "/"));
         }
@@ -837,5 +856,23 @@ mod tests {
         fs::remove_file(inside).unwrap();
         fs::remove_file(outside).unwrap();
         fs::remove_dir_all(directory).unwrap();
+    }
+    #[cfg(unix)]
+    #[test]
+    fn policy_symlink_and_target_are_both_skipped() {
+        use std::os::unix::fs::symlink;
+        let directory = std::env::temp_dir().join(format!("cardskin-policy-alias-test-{}", std::process::id()));
+        fs::create_dir_all(&directory).unwrap();
+        let target = directory.join("shared.tsv");
+        let alias = directory.join("alias.tsv");
+        fs::write(&target, "fixtureword\tA synthetic exception reason for this test.\n").unwrap();
+        symlink("shared.tsv", &alias).unwrap();
+        assert_eq!(
+            policy_paths_under_root(&directory, vec![&alias]).unwrap(),
+            BTreeSet::from(["shared.tsv".to_owned(), "alias.tsv".to_owned()])
+        );
+        fs::remove_file(alias).unwrap();
+        fs::remove_file(target).unwrap();
+        fs::remove_dir(directory).unwrap();
     }
 }
