@@ -102,6 +102,10 @@ impl ScopedRules {
         if !(path.starts_with("cards/") || path.starts_with("tokens/")) || !path.ends_with(".txt") {
             return line.to_owned();
         }
+        // A raw SVar value may itself be a pipe-delimited typed selector.
+        if line.starts_with("SVar:") && !line.contains('$') {
+            return self.mask_clause(line);
+        }
         line.split('|')
             .map(|clause| self.mask_clause(clause.trim()))
             .collect::<Vec<_>>()
@@ -301,6 +305,12 @@ mod tests {
         assert!(scoped
             .mask_line(path, "K:Equip:2:Flavor$ Fixtureword")
             .contains("Fixtureword"));
+    }
+    #[test]
+    fn raw_variable_scope_covers_pipe_delimited_selector() {
+        let (_, scoped) = parse("fixtureword\tTyped local selector identifier.\tmirror/svar-value/BuffedBy\n", "test").unwrap();
+        assert!(!scoped.mask_line("cards/00/test.txt", "SVar:BuffedBy:Artifact | Fixtureword").to_ascii_lowercase().contains("fixtureword"));
+        assert!(scoped.mask_line("cards/00/test.txt", "SVar:Other:Artifact | Fixtureword").contains("Fixtureword"));
     }
     #[test]
     fn invalid_and_duplicate_scopes_are_rejected() {
