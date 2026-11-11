@@ -810,7 +810,7 @@ vivien	serialized mechanics expression or rules identifier. Only the listed mirr
 vraska	serialized mechanics expression or rules identifier. Only the listed mirror components are exempt; prose and DeepScry remain scanned.	mirror/parameter/IsPresent
 wasp	local ability variable and typed references. Only the listed mirror components are exempt; prose and DeepScry remain scanned.	mirror/parameter/Choices,mirror/svar-label
 wasteland	local ability variable and typed references. Only the listed mirror components are exempt; prose and DeepScry remain scanned.	mirror/parameter/FalseSubAbility,mirror/svar-label
-whale	serialized mechanics expression or rules identifier. Only the listed mirror components are exempt; prose and DeepScry remain scanned.	mirror/parameter/ConditionPresent
+whale	serialized mechanics expression or rules identifier. Only the listed mirror components are exempt; prose and DeepScry remain scanned.	mirror/parameter/ChangeType,mirror/parameter/ConditionPresent
 wish	Rules type, selector or cost operand; operand of an exact keyword dispatch API. Only the listed mirror components are exempt; prose and DeepScry remain scanned.	mirror/keyword/etbCounter,mirror/parameter/Cost
 worm	Rules type, selector or cost operand. Only the listed mirror components are exempt; prose and DeepScry remain scanned.	mirror/parameter/ValidCard
 wraith	Rules type, selector or cost operand. Only the listed mirror components are exempt; prose and DeepScry remain scanned.	mirror/parameter/AddType,mirror/parameter/Affected,mirror/parameter/ConditionPresent,mirror/parameter/SetCreatureTypes,mirror/parameter/ValidAttackers,mirror/parameter/ValidCards,mirror/parameter/ValidTgts
@@ -820,3 +820,9 @@ yanggu	serialized mechanics expression or rules identifier. Only the listed mirr
 yanling	serialized mechanics expression or rules identifier. Only the listed mirror components are exempt; prose and DeepScry remain scanned.	mirror/parameter/IsPresent,mirror/svar-value/BuffedBy
 zhalfirin	local ability variable and typed references. Only the listed mirror components are exempt; prose and DeepScry remain scanned.	mirror/parameter/ReplacementEffects,mirror/svar-label
 zubera	serialized mechanics expression or rules identifier. Only the listed mirror components are exempt; prose and DeepScry remain scanned.	mirror/parameter/Count
+
+# Star Trek ingestion (2026-11-11): exact typed selectors and keyword operands.
+klingon warrior	Required rules type or filter operand. Only these mirror components are exempt; prose, display values and other targets remain scanned.	mirror/parameter/SacValid,mirror/parameter/ValidCard
+officer	Required rules type or filter operand. Only these mirror components are exempt; prose, display values and other targets remain scanned.	mirror/parameter/Affected,mirror/parameter/Cost,mirror/parameter/Count,mirror/parameter/Types,mirror/parameter/ValidSource,mirror/svar-value/BuffedBy
+tribble	Required rules type or filter operand. Only these mirror components are exempt; prose, display values and other targets remain scanned.	mirror/parameter/Affected
+vulcan	Required rules type or filter operand. Only these mirror components are exempt; prose, display values and other targets remain scanned.	mirror/keyword/Affinity
